@@ -93,12 +93,12 @@ plt.show()
 autostereogram = autostereogram[:-70, :]
 rescaled = (255.0 / autostereogram.max() * (autostereogram - autostereogram.min())).astype(np.uint8)
 sv = PIL.Image.fromarray(rescaled)
-sv.save("shift5_70patch.png")
+sv.save("output/shift5_70patch.png")
 
 rescaled = (depthmap[:-70, 70:]).astype(np.uint8)
 sv = PIL.Image.fromarray(rescaled)
-sv.save("dm1.png")
+sv.save("output/dm1.png")
 
 inv = np.invert(rescaled, dtype=np.uint8)
 sv = PIL.Image.fromarray(inv)
-sv.save("inverted_dm.png")
+sv.save("output/inverted_dm.png")
