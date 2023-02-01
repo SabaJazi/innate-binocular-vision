@@ -12,7 +12,7 @@ def generate_2d_pink_noise(size=(70, 70), frequency=1.0, seed=0):
     rand_array = np.random.rand(size[0], size[1])
     
     plt.imshow(rand_array)
-    plt.title("rand_array")
+    plt.title("rand_array(pattern)")
     plt.show()
     
     #Group 1: calculating features from randomness using discrete fourier transform
