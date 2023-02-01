@@ -4,7 +4,7 @@ import PIL
 import numpy as np
 import matplotlib.pyplot as plt
 
-#---------------------------------------------------------------------------------------------
+#-----------------------------------------making a pattern for stereogram -------------------------
 
 def generate_2d_pink_noise(size=(70, 70), frequency=1.0, seed=0):
     #seed random for reproducible results and generate a random 2D array
@@ -41,3 +41,64 @@ def generate_2d_pink_noise(size=(70, 70), frequency=1.0, seed=0):
     norm_pink_noise = (pink_noise - np.mean(pink_noise)) / np.std(pink_noise)
     
     return norm_pink_noise
+
+#-----------------------------------making a depthmap for stereogram ----------------------------------------------
+    #Function to create the circular depthmap for the autostereogram
+def create_circular_depthmap(shape=(270, 270), center=None, radius=100):
+    depthmap = np.zeros(shape, dtype=np.float)
+    
+    a = 100
+    b = 170
+    n = 270
+    r = radius#50
+    y, x = np.ogrid[-a:n-a, -b:n-b]
+    
+    mask = x * x + y * y <= r * r
+    depthmap[mask] = 4
+    
+    return depthmap
+
+
+#--------------------------------------making the stereogram from the pattern and depthmap------------------------------------------
+#Function to create the autosterogram from the depthmap and pattern
+def make_autostereogram(depthmap, pattern):
+    autostereogram = np.zeros_like(depthmap, dtype=pattern.dtype)
+    
+    for r in np.arange(autostereogram.shape[0]):
+        for c in np.arange(autostereogram.shape[1]):
+            if c < pattern.shape[1]:
+                autostereogram[r, c] = pattern[r % pattern.shape[0], c]
+            else:
+                shift = int(depthmap[r, c])
+                autostereogram[r, c] = autostereogram[r, c - pattern.shape[1] + shift]
+                
+    return autostereogram
+
+#-------------------------------# run codes: Create and display the depthmap----------------------------
+
+depthmap = create_circular_depthmap(radius = 50)
+plt.imshow(depthmap)
+plt.title("Depth Map")
+plt.show()
+
+#Generate the pink noise
+pink_noise = generate_2d_pink_noise(size=(70,70))
+
+#Create and display the autostereogram from the generated depthmap and pink noise
+autostereogram = make_autostereogram(depthmap, pink_noise)
+plt.imshow(autostereogram)
+plt.title("Autostereogram")
+plt.show()
+
+autostereogram = autostereogram[:-70, :]
+rescaled = (255.0 / autostereogram.max() * (autostereogram - autostereogram.min())).astype(np.uint8)
+sv = PIL.Image.fromarray(rescaled)
+sv.save("shift5_70patch.png")
+
+rescaled = (depthmap[:-70, 70:]).astype(np.uint8)
+sv = PIL.Image.fromarray(rescaled)
+sv.save("dm1.png")
+
+inv = np.invert(rescaled, dtype=np.uint8)
+sv = PIL.Image.fromarray(inv)
+sv.save("inverted_dm.png")
