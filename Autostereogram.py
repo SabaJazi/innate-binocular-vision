@@ -78,6 +78,7 @@ def make_autostereogram(depthmap, pattern):
 
 depthmap = create_circular_depthmap(radius = 50)
 plt.imshow(depthmap)
+
 plt.title("Depth Map")
 plt.show()
 
