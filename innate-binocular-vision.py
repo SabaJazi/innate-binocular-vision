@@ -192,8 +192,6 @@ def unpack_filters(filters):
     return (first_eye, second_eye)
 
 
-# In[8]:
-
 def linear_disparity(first_eye, second_eye):
     disparity_map = np.empty([first_eye.shape[0], first_eye.shape[1]*2])
     for index in range(first_eye.shape[0]):
@@ -277,7 +275,8 @@ def disparity_distribution(disparity_map):
 
 
 # In[16]:
-
+#------------------------------------GCP related code---------------------------------------
+"""
 def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, autostereogram, asg_patch_size, groundtruth, experiment_folder):
     autostereogram = open_norm(autostereogram,verbose=False)
     groundtruth = np.array(Image.open(groundtruth).convert("L"))
@@ -330,7 +329,7 @@ def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_wid
 
 
     return params
-
+"""
 
 
 def distance(x0, y0, x1, y1):
@@ -479,7 +478,7 @@ class LGN:
 #-------------------------------cloaud scripts--------------------------------------------------------
 
 
-
+""""
 def save_handler(bucket, path, input_array,suffix=None):
     if input_array.ndim == 2:
         save_array(input_array, "tmp.png")
@@ -547,3 +546,5 @@ def cloud_experiment(bucket, experiment_subparameters,patch_max,filter_max):
 
     experiment_subparameters["correlation"] = correlation
     return experiment_subparameters
+
+    """
