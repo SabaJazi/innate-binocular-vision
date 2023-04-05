@@ -12,6 +12,7 @@ from sklearn.feature_extraction import image as skimage
 # from google.cloud import storage
 
 #------------------------------------------------------
+# Next few lines calculates optimal p for percolation
 def calculate_optimal_p(t, r, a):
     p = t / (((np.pi * (r**2)/2))*(1+a))
     return p
@@ -548,3 +549,67 @@ def cloud_experiment(bucket, experiment_subparameters,patch_max,filter_max):
     return experiment_subparameters
 
     """
+#---------------------------no gcp run function---------------------------
+#-nf=2000 -nc=20 -np=100000 -ps=8 -ls=64 -la 0.05 0.05 1 -lp 0.5 1.5 10 -lt 1 4 8 -lr 4 4 1
+#  experiment_folder parameter was removed from function call
+def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_width,
+ lgn_p, lgn_r, lgn_t, lgn_a, autostereogram, asg_patch_size, groundtruth):
+    autostereogram = open_norm(autostereogram,verbose=False)
+    groundtruth = np.array(Image.open(groundtruth).convert("L"))
+
+    filters = generate_filters(num_filters, num_components, num_patches,
+                               patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
+    split_filters = unpack_filters(filters)
+    disparity_map = linear_disparity(split_filters[0], split_filters[1])
+
+    # plt.hist(disparity_distribution(disparity_map))
+    # plt.show()
+
+    #normalized_disparity = disparity_map
+
+    normalized_disparity = normalize_disparity(disparity_map)
+    # plt.hist(disparity_distribution(normalized_disparity))
+    # plt.show()
+
+    activity = generate_activity(autostereogram, asg_patch_size,
+                                 split_filters[0], split_filters[1], normalized_disparity)
+    depth_estimate = estimate_depth(activity)
+    correlation = np.corrcoef(depth_estimate.flatten(),
+                              groundtruth.flatten())[0, 1]
+    current_time = time.localtime()
+    ident_hash = generate_ident_hash(num_filters, num_components, num_patches,
+                                     patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, time.time())
+
+    # image_path = "%s/images/%s.png" % (experiment_folder, ident_hash)
+    # data_path = "%s/json/%s.json" % (experiment_folder, ident_hash)
+    save_array(depth_estimate, "im.png")
+    # client = storage.Client()
+    # bucket = client.get_bucket('ibvdata')
+    # blob = bucket.blob(image_path)
+    # blob.upload_from_filename("im.png")
+    # blob = bucket.blob(data_path)
+    params = {
+        "num_filters": num_filters,
+        "num_components": num_components,
+        "num_patches": num_patches,
+        "patch_size": patch_size,
+        "lgn_width": lgn_width,
+        "lgn_p": lgn_p,
+        "lgn_r": lgn_r,
+        "lgn_t": lgn_t,
+        "lgn_a": lgn_a,
+        "corr": np.abs(correlation),
+        "time": time.strftime('%a, %d %b %Y %H:%M:%S GMT', current_time),
+        "id": ident_hash
+    }
+    # blob.upload_from_string(json.dumps(params))
+
+
+    return params
+#-----------------------------------------------------------
+#-nf=2000 -nc=20 -np=100000 -ps=8 -ls=64 -la (min=0.05 max=0.05 step=1) -lp (0.5 1.5 10) -lt (1 4 8) -lr (4 4 1)
+
+autostereogram_path=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output\shift5_70patch.png'
+ground_truth_path=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output\dm1.png'
+
+run_experiment(2000,20,10000,8,64,0.5 ,1 ,1 ,0.05,autostereogram_path,8,ground_truth_path)

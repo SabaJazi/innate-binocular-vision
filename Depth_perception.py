@@ -3,11 +3,15 @@ import numpy as np
 
 from PIL import Image, ImageOps
 from scipy import signal
-from ipywidgets import interact, interactive, fixed
+# from ipywidgets import interact, interactive, fixed
 
 import matplotlib.pyplot as plt
 
 #----------------------------------------------------------------------------
+#(shift_x, shift_y, sigma_x, sigma_y, rotation, phase_shift, frequency, pd)
+# (5,5,1,1,5,5,2,2)
+#(size, shift, sigma, rotation, phase_shift, frequency)
+
 def generate_gabor(size, shift, sigma, rotation, phase_shift, frequency):
     radius = (int((size[0]/2.0), int((size[1]/2.0))))
     [x, y] = np.meshgrid(range(-radius[0], radius[0]), range(-radius[1], radius[1]))
@@ -93,3 +97,5 @@ def demo_gabor(shift_x, shift_y, sigma_x, sigma_y, rotation, phase_shift, freque
     
     #Start explorative linear convolution
     linear_convolution(static, shifted)
+
+    #--------------------------------------------------------------
