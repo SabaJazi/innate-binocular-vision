@@ -12,6 +12,7 @@ from sklearn.feature_extraction import image as skimage
 # from google.cloud import storage
 
 #------------------------------------------------------
+# Next few lines calculates optimal p for percolation
 def calculate_optimal_p(t, r, a):
     p = t / (((np.pi * (r**2)/2))*(1+a))
     return p
@@ -196,8 +197,6 @@ def unpack_filters(filters):
     return (first_eye, second_eye)
 
 
-# In[8]:
-
 def linear_disparity(first_eye, second_eye):
     disparity_map = np.empty([first_eye.shape[0], first_eye.shape[1]*2])
     for index in range(first_eye.shape[0]):
@@ -281,7 +280,6 @@ def disparity_distribution(disparity_map):
 
 
 # In[16]:
-'''
 
 def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, autostereogram, asg_patch_size, groundtruth, experiment_folder):
     autostereogram = open_norm(autostereogram,verbose=False)
@@ -336,7 +334,6 @@ def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_wid
 
     return params
 
-'''
 
 
 def distance(x0, y0, x1, y1):
@@ -484,7 +481,7 @@ class LGN:
         
 #-------------------------------cloaud scripts--------------------------------------------------------
 
-'''
+
 
 def save_handler(bucket, path, input_array,suffix=None):
     if input_array.ndim == 2:
@@ -553,74 +550,3 @@ def cloud_experiment(bucket, experiment_subparameters,patch_max,filter_max):
 
     experiment_subparameters["correlation"] = correlation
     return experiment_subparameters
-
-    '''
-
-#--------------------------------------run------------------------------------
-def run_experiment_noGCP(num_filters, num_components, num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, autostereogram, asg_patch_size, groundtruth, experiment_folder):
-    autostereogram = open_norm(autostereogram,verbose=False)
-    groundtruth = np.array(Image.open(groundtruth).convert("L"))
-
-    filters = generate_filters(num_filters, num_components, num_patches,
-                               patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
-    split_filters = unpack_filters(filters)
-    disparity_map = linear_disparity(split_filters[0], split_filters[1])
-
-    # plt.hist(disparity_distribution(disparity_map))
-    # plt.show()
-
-    #normalized_disparity = disparity_map
-
-    normalized_disparity = normalize_disparity(disparity_map)
-    # plt.hist(disparity_distribution(normalized_disparity))
-    # plt.show()
-
-    activity = generate_activity(autostereogram, asg_patch_size,
-                                 split_filters[0], split_filters[1], normalized_disparity)
-    depth_estimate = estimate_depth(activity)
-    correlation = np.corrcoef(depth_estimate.flatten(),
-                              groundtruth.flatten())[0, 1]
-    current_time = time.localtime()
-    ident_hash = generate_ident_hash(num_filters, num_components, num_patches,
-                                     patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, time.time())
-    image_path = "%s/images/%s.png" % (experiment_folder, ident_hash)
-    data_path = "%s/json/%s.json" % (experiment_folder, ident_hash)
-    save_array(depth_estimate, "im.png")
-   
-    params = {
-        "num_filters": num_filters,
-        "num_components": num_components,
-        "num_patches": num_patches,
-        "patch_size": patch_size,
-        "lgn_width": lgn_width,
-        "lgn_p": lgn_p,
-        "lgn_r": lgn_r,
-        "lgn_t": lgn_t,
-        "lgn_a": lgn_a,
-        "corr": np.abs(correlation),
-        "time": time.strftime('%a, %d %b %Y %H:%M:%S GMT', current_time),
-        "id": ident_hash
-    }
-    return params
-
-#---------------------------------------------------------
-#width=128, p=0.5, r=1.0, t=1, trans=0.
-num_filters=7
-num_components=2
-num_patches=10
-#patch size of 16x16
-patch_size=16
-lgn_width=128
-lgn_p=0.5
-lgn_r=1.0
-lgn_t=0
-lgn_a=10
-autostereogram=r'C:\Users\19404\innate-binocular-vision\output\shift5_70patch.png'
-
-asg_patch_size=10
-groundtruth=r'C:\Users\19404\innate-binocular-vision\output\dm1.png'
-experiment_folder=r'C:\Users\19404\innate-binocular-vision\output'
-run_experiment_noGCP(num_filters, num_components, num_patches,
-                      patch_size, lgn_width, lgn_p, lgn_r, lgn_t,
-                        lgn_a, autostereogram, asg_patch_size, 
-                        groundtruth, experiment_folder)
