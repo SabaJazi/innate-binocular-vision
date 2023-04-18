@@ -2,6 +2,7 @@ from numpy import *
 import scipy
 import pickle
 import pylab
+from PIL import Image
 
 def convert_patches(old_patches, convert_dim=4, num_layers = 2):
   """ this function converts between a filter matrix with columns as filters and
@@ -85,7 +86,7 @@ def collect_natural_patches(img_folder, num_patches = 5000, patch_width = 8, dow
   """ collects image patches, in the same way as the LGN model, for analysis 
   the natural images are from a specific folder of 13 .tiff files"""
 
-  import Image
+  # import Image
   max_tries = num_patches * 50
   image_width = 200
   

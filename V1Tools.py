@@ -134,7 +134,7 @@ def get_depth_mat(state, shiftLR=140, max_activity_method=False, adaptShiftLR=Fa
 	  V1 shift matrix and filter product activity """
 	  
   if adaptShiftLR:
-	  shiftLR = adapt_shiftLR(state['img_mat'][0])
+          shiftLR = adapt_shiftLR(state['img_mat'][0])
 	
   filter_prod_activity = get_filter_prod_activity(state, shiftLR)
   disp_mat = FilterTools.get_disparity_mat(state['v1_bases'])
