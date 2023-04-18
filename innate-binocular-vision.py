@@ -505,48 +505,122 @@ def save_handler(bucket, path, input_array,suffix=None):
 
 
 
+# ----------------------------------------------------------------------------------------------------
 
+# def cloud_experiment(bucket, experiment_subparameters,patch_max,filter_max):
+#     depthmap_blob = bucket.get_blob(experiment_subparameters["depthmap_path"])
+#     depthmap_blob.download_to_filename("dm.png")
+#     autostereogram_blob = bucket.get_blob(experiment_subparameters["autostereogram_path"])
+#     autostereogram_blob.download_to_filename("as.png")
 
-def cloud_experiment(bucket, experiment_subparameters,patch_max,filter_max):
-    depthmap_blob = bucket.get_blob(experiment_subparameters["depthmap_path"])
-    depthmap_blob.download_to_filename("dm.png")
-    autostereogram_blob = bucket.get_blob(experiment_subparameters["autostereogram_path"])
-    autostereogram_blob.download_to_filename("as.png")
+#     autostereogram = open_norm("as.png",verbose=False)
+#     groundtruth = np.array(Image.open("dm.png").convert("L"))
 
-    autostereogram = open_norm("as.png",verbose=False)
-    groundtruth = np.array(Image.open("dm.png").convert("L"))
-
-    try:
-        res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
-                               experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]["lgn_p"], experiment_subparameters["lgn_parameters"]["lgn_r"], experiment_subparameters["lgn_parameters"]["lgn_t"], experiment_subparameters["lgn_parameters"]["lgn_a"])
-    except ValueError as err:
-        raise err
+#     try:
+#         res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
+#                                experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]["lgn_p"], experiment_subparameters["lgn_parameters"]["lgn_r"], experiment_subparameters["lgn_parameters"]["lgn_t"], experiment_subparameters["lgn_parameters"]["lgn_a"])
+#     except ValueError as err:
+#         raise err
     
-    filters = res[0]
-    patches = res[1].reshape(-1, experiment_subparameters["patch_size"],experiment_subparameters["patch_size"])
-    lgn = res[2]
+#     filters = res[0]
+#     patches = res[1].reshape(-1, experiment_subparameters["patch_size"],experiment_subparameters["patch_size"])
+#     lgn = res[2]
 
 
+#     split_filters = unpack_filters(filters)
+
+#     save_handler(bucket, experiment_subparameters["lgn_dump"],lgn)
+#     save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[0][:filter_max],"0")
+#     save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[1][:filter_max],"1")
+#     save_handler(bucket, experiment_subparameters["patch_dump"],patches[:patch_max])
+
+
+
+#     disparity_map = linear_disparity(split_filters[0], split_filters[1])
+#     normalized_disparity = normalize_disparity(disparity_map)
+#     activity = generate_activity(autostereogram, experiment_subparameters["autostereogram_patch"], split_filters[0], split_filters[1], normalized_disparity)
+#     depth_estimate = estimate_depth(activity)
+
+#     save_handler(bucket, experiment_subparameters["activity_dump"],depth_estimate)
+
+
+
+#     correlation = np.corrcoef(depth_estimate.flatten(),
+#                               groundtruth.flatten())[0, 1]
+
+#     experiment_subparameters["correlation"] = correlation
+#     return experiment_subparameters
+
+    
+#--------------------------------------run------------------------------------
+def run_experiment_noGCP(num_filters, num_components, num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, autostereogram, asg_patch_size, groundtruth, experiment_folder):
+    autostereogram = open_norm(autostereogram,verbose=False)
+    groundtruth = np.array(Image.open(groundtruth).convert("L"))
+
+    filters = generate_filters(num_filters, num_components, num_patches,
+                               patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
     split_filters = unpack_filters(filters)
-
-    save_handler(bucket, experiment_subparameters["lgn_dump"],lgn)
-    save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[0][:filter_max],"0")
-    save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[1][:filter_max],"1")
-    save_handler(bucket, experiment_subparameters["patch_dump"],patches[:patch_max])
-
-
-
     disparity_map = linear_disparity(split_filters[0], split_filters[1])
+
+    # plt.hist(disparity_distribution(disparity_map))
+    # plt.show()
+
+    #normalized_disparity = disparity_map
+
     normalized_disparity = normalize_disparity(disparity_map)
-    activity = generate_activity(autostereogram, experiment_subparameters["autostereogram_patch"], split_filters[0], split_filters[1], normalized_disparity)
+    # plt.hist(disparity_distribution(normalized_disparity))
+    # plt.show()
+
+    activity = generate_activity(autostereogram, asg_patch_size,
+                                 split_filters[0], split_filters[1], normalized_disparity)
     depth_estimate = estimate_depth(activity)
-
-    save_handler(bucket, experiment_subparameters["activity_dump"],depth_estimate)
-
-
-
     correlation = np.corrcoef(depth_estimate.flatten(),
                               groundtruth.flatten())[0, 1]
+    current_time = time.localtime()
+    ident_hash = generate_ident_hash(num_filters, num_components, num_patches,
+                                     patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, time.time())
+    image_path = "%s/images/%s.png" % (experiment_folder, ident_hash)
+    data_path = "%s/json/%s.json" % (experiment_folder, ident_hash)
+    save_array(depth_estimate, "im.png")
 
-    experiment_subparameters["correlation"] = correlation
-    return experiment_subparameters
+    params = {
+        "num_filters": num_filters,
+        "num_components": num_components,
+        "num_patches": num_patches,
+        "patch_size": patch_size,
+        "lgn_width": lgn_width,
+        "lgn_p": lgn_p,
+        "lgn_r": lgn_r,
+        "lgn_t": lgn_t,
+        "lgn_a": lgn_a,
+        "corr": np.abs(correlation),
+        "time": time.strftime('%a, %d %b %Y %H:%M:%S GMT', current_time),
+        "id": ident_hash
+    }
+    return params
+
+#---------------------------------------------------------
+#width=128, p=0.5, r=1.0, t=1, trans=0.
+num_filters=7
+num_components=2
+num_patches=10
+#patch size of 16x16
+patch_size=16
+lgn_width=128
+lgn_p=0.5
+lgn_r=1.0
+lgn_t=0
+lgn_a=10
+# ------------change directory to where your repository is located------------
+# autostereogram=r'C:\Users\19404\innate-binocular-vision\output\shift5_70patch.png'
+autostereogram=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output\shift5_70patch.png'
+# groundtruth=r'C:\Users\19404\innate-binocular-vision\output\dm1.png'
+groundtruth=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output\dm1.png'
+# experiment_folder=r'C:\Users\19404\innate-binocular-vision\output'
+experiment_folder=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output'
+asg_patch_size=10
+
+run_experiment_noGCP(num_filters, num_components, num_patches,
+                      patch_size, lgn_width, lgn_p, lgn_r, lgn_t,
+                        lgn_a, autostereogram, asg_patch_size, 
+                        groundtruth, experiment_folder)
