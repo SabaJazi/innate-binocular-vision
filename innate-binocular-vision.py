@@ -5,7 +5,7 @@ import hashlib
 import numpy as np
 import random
 import os
-
+from matplotlib import pyplot as plt
 from scipy import signal
 from sklearn.decomposition import FastICA
 from sklearn.feature_extraction import image as skimage
@@ -52,11 +52,14 @@ def generate_gabor(size, shift, sigma, rotation, phase_shift, frequency):
 
 
 def open_norm(path, verbose=False):
+# Load image from path(autostereogram) and convert to grayscale
     raw = np.array(Image.open(path).convert("L"))
+ # Normalize image,scale the pixel values to have zero mean and unit variance
     norm = (raw - np.mean(raw)) / np.std(raw)
-
+# If verbose is True, return both raw and normalized images
     if verbose:
         return raw, norm
+# Otherwise, return only the normalized image
     else:
         return norm
 
@@ -620,7 +623,75 @@ groundtruth=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output\d
 experiment_folder=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output'
 asg_patch_size=10
 
-run_experiment_noGCP(num_filters, num_components, num_patches,
-                      patch_size, lgn_width, lgn_p, lgn_r, lgn_t,
-                        lgn_a, autostereogram, asg_patch_size, 
-                        groundtruth, experiment_folder)
+# run_experiment_noGCP(num_filters, num_components, num_patches,
+#                       patch_size, lgn_width, lgn_p, lgn_r, lgn_t,
+#                         lgn_a, autostereogram, asg_patch_size, 
+#                         groundtruth, experiment_folder)
+
+# --------------------------------------
+# raw,norm=open_norm(autostereogram,verbose=True)
+# print(raw.shape)
+# fig = plt.figure(figsize=(10, 7))
+# rows = 1
+# columns = 2
+# fig.add_subplot(rows, columns, 1)
+# plt.imshow(raw,cmap='gray')
+# plt.axis('off')
+# plt.title("raw")
+
+# fig.add_subplot(rows, columns, 2)
+# plt.imshow(norm,cmap='gray')
+# plt.axis('off')
+# plt.title("norm")
+# plt.show()
+# -------------------------for test purposes only--------------------
+def t_generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a):
+    half_comp = patch_size**2
+    patch_count = 0
+
+    while (patch_count < num_patches):
+        L = LGN(width=lgn_width, p=lgn_p, r=lgn_r, t=lgn_t, trans=lgn_a,
+                make_wave=True, num_layers=2, random_seed=random.randint(1, 100))
+        try:
+            layer_activity = L.make_img_mat()
+        except ValueError as err:
+            raise err
+
+        patches_1 = np.array(skimage.extract_patches_2d(layer_activity[0], (patch_size, patch_size)))
+        patches_2 = np.array(skimage.extract_patches_2d(layer_activity[1], (patch_size, patch_size)))
+        # reshaped_patches_1 = patches_1.reshape(-1,patches_1.shape[1]*patches_1.shape[1])
+        # reshaped_patches_2 = patches_2.reshape(-1,patches_2.shape[1]*patches_2.shape[1])
+        composite_patches = np.concatenate((patches_1, patches_2), axis=1)
+        blacklist = []
+        for x in range(composite_patches.shape[0]):
+            if composite_patches[x][:half_comp].std() == 0.0 or composite_patches[x][half_comp:].std() == 0.0:
+                blacklist.append(x)
+        composite_patches = np.delete(composite_patches, np.array(blacklist), axis=0)
+       
+        if (patch_count == 0):
+            patch_base = composite_patches
+        else:
+            patch_base = np.append(patch_base, composite_patches, axis=0)
+        
+        patch_count = patch_base.shape[0]
+    
+    return (patch_base[:num_patches], layer_activity)
+# ---------------------------------------------------------------
+
+# num_filters=7 num_components=2 num_patches=10 patch_size=16
+#  lgn_width=128 lgn_p=0.5 lgn_r=1.0 lgn_t=0 lgn_a=10
+patches,layer_activity = t_generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
+
+# filters = generate_filters(num_filters, num_components, num_patches,
+#                                patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
+print("should be 10:",len(patches),"\nshould be 2:", len(layer_activity))
+print((patches[1].shape))
+fig = plt.figure(figsize=(10, 7))
+rows = 1
+columns = 10
+for i in (1,columns-1):
+    fig.add_subplot(rows, columns, i)
+    plt.imshow(patches[i],cmap='gray')
+    plt.axis('off')
+    plt.title("patches[1]")
+plt.show()
