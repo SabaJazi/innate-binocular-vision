@@ -275,3 +275,6 @@ def test_picturegram(inputimage):
   output_map = V1Tools.get_depth_mat(state)
   pylab.figure(2)
   pylab.imshow(output_map.transpose())
+
+
+# ----------------------------------

@@ -1,10 +1,109 @@
 
-import ica_helper_methods
+# import ica_helper_methods
 import matplotlib.pyplot as plt
+from PIL import Image
 import sklearn.decomposition
 from sklearn import decomposition
 import numpy as np
 import pylab as py
+
+import matplotlib
+# =====================================================
+def collectPatchesBinocular(numPatches, patchWidth, filePath):
+    maxTries = numPatches * 50
+    firstPatch = 0 # the first patch number accepted from an image
+    firstTry = 0 # the first attempt to take a patch from the image
+    patchCount = 0 # number of collected patches
+    tryCount = 0 # number of attempted collected patches
+    numPixels = patchWidth * patchWidth
+    patchSample = np.zeros([patchWidth,patchWidth],'double')
+    patchSampleL = np.zeros([numPixels,numPatches],'double')
+    patchSampleR = np.zeros([numPixels,numPatches],'double')
+    patch = np.zeros([numPixels,1],'double')
+    #imgPatches = np.zeros([numPixels,numPatches],'double')
+    imgPatchesL = np.zeros([numPixels,numPatches],'double')
+    imgPatchesR = np.zeros([numPixels,numPatches],'double')
+    # chooses the image that we're sampling from
+    imgCount = 1
+    image = Image.open(filePath  + '.png')
+    Height = image.height
+    Width = image.width
+    imageHeight, imageWidth = matplotlib.pyplot.imread(filePath  + '.png').shape
+    # print( imageHeight, imageWidth)
+    image = image.convert('L')
+
+    left1 = 0
+    top1 = 0
+    right1 = 270 // 2
+    bottom1 = 200
+
+    left2 = 270 // 2
+    top2 = 0
+    right2 = 270
+    bottom2 = 200
+
+    image_left = image.crop((left1, top1, right1, bottom1))
+    image_right = image.crop((left2, top2, right2, bottom2))
+    left_width = image_left.width
+    right_width = image_right.width
+    
+    ## no error yet
+    imageL = np.asarray(image_left, 'double').transpose()
+   
+    # normalizing the image
+    imageL=imageL - (np.mean(imageL))
+    imageL =imageL/(np.std(imageL) )
+
+    imageR = np.asarray(image_right, 'double').transpose()
+    # normalizing the image
+    imageR=imageR - (np.mean(imageR))
+    imageR =imageR/(np.std(imageR) )
+
+    #########################################################
+
+    image = np.asarray(image, 'double').transpose()
+    # normalizing the image
+    image=image - (np.mean(image))
+    image =image/(np.std(image) )
+
+    px = np.random.randint(0, left_width - patchWidth)
+    py = np.random.randint(0, Height - patchWidth)
+
+    '''
+    lx = np.random.randint(0,left_width // 2)
+    ly = np.random.randint(0, imageHeight // 2)
+    rx = np.random.randint(0,right_width // 2)
+    ry = np.random.randint(0, imageHeight // 2)
+    '''
+
+    Patches = []
+
+
+    while patchCount < numPatches and tryCount < numPatches:
+        tryCount += 1
+        px = np.random.randint(0, left_width - patchWidth)
+        py = np.random.randint(0, Height - patchWidth)
+
+        patchSampleL = imageL[px:px+patchWidth,py:py+patchWidth].copy()
+        patchSampleR = imageR[px:px+patchWidth,py:py+patchWidth].copy()
+        patchStdL = patchSampleL.std()
+        patchStdR = patchSampleR.std()
+
+        # create the patch vector
+        patchL = np.reshape(patchSampleL, numPixels)
+        patchL = patchL - np.mean(patchL)
+        imgPatchesL[:,patchCount] = patchL.copy()
+
+        patchR = np.reshape(patchSampleR, numPixels)
+        patchR = patchR - np.mean(patchR)
+        imgPatchesR[:,patchCount] = patchR.copy()
+        patchCount += 1
+    Patches.append(imgPatchesL)
+    Patches.append(imgPatchesR)
+
+    return np.array(Patches)
+
+
 # ---------------------------------------------------
 
 def showPatchesBinocular(prePatchesL, prePatchesR, showPatchNum, display=True):
@@ -12,6 +111,7 @@ def showPatchesBinocular(prePatchesL, prePatchesR, showPatchNum, display=True):
     patchesR = prePatchesR
     totalPatches = 500
     dataDim = 256
+    # dataDim = 64
     patchWidth = int(np.round(np.sqrt(dataDim)))
     # extract show_patch_num patches
     displayPatchL = np.zeros([dataDim, showPatchNum], float) #array of zeros for left
@@ -56,9 +156,9 @@ def showPatchesBinocular(prePatchesL, prePatchesR, showPatchNum, display=True):
     '''
 
     k = 0
-    fig = plt.figure(figsize=(2,16))
+    fig = plt.figure(figsize=(8,8))
     ##############  LOOP #####################################
-    for i in range(0,showPatchNum):
+    for i in range(0,int(showPatchNum/4)):
         k = k+1
         y_i = i // patchesY
         x_i = i % patchesY
@@ -71,22 +171,24 @@ def showPatchesBinocular(prePatchesL, prePatchesR, showPatchNum, display=True):
         fullPatchR = np.zeros([pw, pw], float)
         fullPatchR[0:pw,:] = reshapedR[:,:].copy()
         patchImgR[x_i*(pw+bw):x_i*(pw+bw)+pw,y_i*(pw+bw):y_i*(pw+bw)+pw] = fullPatchR
-
-        patches_array = np.concatenate((fullPatchL, fullPatchR), axis = 1)
-        ax = plt.subplot(16,1,k)
+        # I concatenate some 1s between concatenation of left and right patches for better visuals
+        patches_array = np.concatenate((fullPatchL,np.ones([pw, pw], float), fullPatchR), axis = 1)
+        # number of pair that are shown
+        ax = plt.subplot(4,1,k)
 
         if k == 1:
-          ax.title.set_text('Left       Right')
+          ax.title.set_text('Left                 Right')
         for i in range(0, showPatchNum):
           py.axis('off')
+          ax.figure.set_size_inches(4, 4)
           ax.imshow(patches_array, interpolation='nearest',cmap=py.get_cmap('gray'))
-
+    plt.show()
+        
 
     return
 # ---------------------------------------------------
 
-patchesBinocular = ica_helper_methods.collectPatchesBinocular(50000, 16, 'C:/Users/19404/innate-binocular-vision/')
-
+patchesBinocular = collectPatchesBinocular(50000, 16, r'C:\vscode\innate-binocular-vision\innate-binocular-vision\data\data')
 left = patchesBinocular[0]
 right = patchesBinocular[1]
 
