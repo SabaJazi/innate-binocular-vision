@@ -170,7 +170,7 @@ def get_disparity_mat(patches, reorder=False):
     # note the patches have zero mean and unit energy
     l_patch = conv_patches[c,0,:,:]
     r_patch = conv_patches[c,1,:,:]
-    for r in range(-pw/2,pw/2+1):
+    for r in range(-pw//2,pw//2+1):
       l_start = max(0,-r)
       l_end = min(pw,pw-r)
       r_start = max(0,r)
@@ -181,7 +181,7 @@ def get_disparity_mat(patches, reorder=False):
       #corr = (l_overlap * r_overlap).sum()
       # correction for parts that don't overlap
       #corr *= pw/float(l_end-l_start)
-      disp_mat[pw/2+r,c] = corr
+      disp_mat[pw//2+r,c] = corr
       
   if reorder:
     max_shift = (disp_mat.shape[0]-1) / 2    

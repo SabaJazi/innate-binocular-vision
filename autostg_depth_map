@@ -1,0 +1,175 @@
+import numpy as np
+import scipy
+from math import pi 
+import random
+import V1Tools
+import pylab 
+from PIL import Image
+import FilterTools
+import matplotlib.pyplot as plt
+
+def read_imgs(imgL, imgR=None,  state={}):
+  """ reads in either a filename or an array as a stereogram
+  returns a state variable for V1Tools """
+  
+  # if it's an autostereogram, make the left and right eye view the same
+  if imgR == None:
+    imgR = imgL
+  
+  if isinstance(imgL,str): #img_in is an image file
+    im_L = Image.open(imgL)
+    im_R = Image.open(imgR)
+    imgL_normed = np.asarray(im_L).transpose() / 255.0
+    imgR_normed = np.asarray(im_R).transpose() / 255.0
+    
+  else: # image is an array
+    im_L = imgL.copy()
+    im_R = imgR.copy()
+    imgL_normed = (im_L - im_L.min()) / (im_L.max() - im_L.min())
+    imgR_normed = (im_R - im_R.min()) / (im_R.max() - im_R.min())    
+
+  state['img_mat'] = np.array([imgL_normed, imgR_normed])
+  return state
+#   ---------------------------------------
+
+
+def pick_gabor_params(num_filters=100, w=10, s_min=2, s_range=2, num_layers = 2):
+  """ this function returns randomly generated gabor filter parameters 
+  where pairs of filters (if num_layers == 2) are quadrature pairs """
+  params = []
+  rnd = random.randint
+  for f_i in range(0,num_filters,num_layers):
+    o = rnd(1,10)*pi
+    #c = [rnd()*w, rnd()*w]
+    c = [w//2, w//2]
+    s = [rnd(1,10)*s_range+s_min, rnd(1,10)*s_range*2+s_min*2]
+    f = (2.5 + rnd(1,10)*(pi-2.5)) / s[0]
+    p = rnd(1,10)*2*pi
+    
+    if num_layers == 1:
+      params.append(dict(o=o, c=c, s=s, f=f, p=p))
+# next if/else moved out of next for loop 
+# to fix the first empty item in list
+    if num_layers == 2:
+        lr_dicts = [{},{}]
+    else: # num_layers == 1:
+        lr_dicts = {}
+    for lr in range(num_layers):
+      if lr == 0:
+        p = rnd(1,10)*2*pi
+      else:
+        p = (p+pi/2) % (2*pi)    
+      lr_dicts[lr] = dict(o=o, c=c, s=s, f=f, p=p)
+    if f_i+1 < num_filters:
+      params.append(lr_dicts)
+  return params
+
+def gabor_filter_generator(p=[], w=10):
+  """ generates a series of gabor filter patches from parameters p
+  p - the gabor filter dictionary of arrays
+  the variables are accessed by p[filt_num][0 or 1]['s_par']
+  o - orientation in radians of the planar cosine wave
+  c[2] - center position of the filter, first pixel at location 0
+  s[2] - standard dev of the gaussian parallel & perp to modulation direction
+  f - spatial frequency in radians / pixel 
+  p - phase of the filter in radians cos=0, -sin=pi/2
+  w - the width in pixels of the patch
+  OUTPUT:
+  a filter matrix: num of filters x 2 x w x w
+  """
+  
+  if not any(p):
+    p = pick_gabor_params()
+
+  num_filters = len(p[0])
+  n_p = np.zeros([num_filters, 2, w, w], 'float')
+  
+  for f_i in range(0,num_filters):
+    for lr in [0,1]:
+    #   print(p[f_i][lr])
+      f = p[f_i][lr]
+      [X0, Y0] = np.meshgrid(range(0,w),range(0,w))
+      X0 = X0 - f['c'][0]
+      Y0 = Y0 - f['c'][1]
+      # rotate the coordinate system
+      X = X0 * np.cos(f['o']) + Y0 * np.sin(f['o'])
+      Y = - X0 * np.sin(f['o']) + Y0 * np.cos(f['o'])
+      temp_n_p = ( 1/(2*pi*f['s'][0]*f['s'][1]) *
+        np.exp( -pi * (X**2 / f['s'][0]**2 + Y**2 / f['s'][1]**2) ) *
+        np.real( np.exp ( 1j * (X*f['f'] + f['p']) )) )
+      temp_n_p -= np.mean(temp_n_p)
+      temp_n_p /= np.std(temp_n_p)
+      n_p[f_i,lr,:,:] = temp_n_p
+  return n_p
+
+# a=gabor_filter_generator()
+# print(a)
+
+# -------------------------------------------------------------------------
+def adapt_shiftLR(img_mat, debug=False):
+  """ this function finds the appropriate shiftLR for the autostereogram """
+  slice_size = 10
+  corrslide = [np.corrcoef(img_mat[0:slice_size,:].flatten(),
+	img_mat[x:(x+slice_size),:].flatten())[0,1]
+	for x in range(slice_size,min(600,img_mat.shape[0]-slice_size))]
+  if debug:
+    import pylab
+    pylab.plot(corrslide)
+  shiftLR = np.argmax(corrslide)+slice_size
+  print ("New shift for autostereogram is %d" % shiftLR)
+  return shiftLR
+
+# ---------------------------------------------------------
+def get_filter_prod_activity(state, shiftLR):
+   """ returns a matrix of combined L and R filter activity over the whole
+	  image - num of filters x xdim x ydim compensating for shiftLR """     
+   pix_shift = int(round(shiftLR / state['downsample'])) #dividing shift by downsample
+   min_L_x = max(0,-pix_shift) #starting point for left filtered
+   min_R_x = max(0,pix_shift) #starting point for right filtered
+   # state.filtered_img.shape[2] is the filtered image width after convolution
+   size_x = state['filtered_img'].shape[2] - abs(pix_shift)
+   L_filtered_shifted = state['filtered_img'][:,0,min_L_x:min_L_x+size_x,:]
+   R_filtered_shifted = state['filtered_img'][:,1,min_R_x:min_R_x+size_x,:]
+   filter_prod_activity = L_filtered_shifted * R_filtered_shifted
+   return filter_prod_activity
+# --------------------------------------------------------------------------
+def get_depth_mat(state, shiftLR=140, max_activity_method=False, adaptShiftLR=False):
+  """ this function creates a depth judgement for an image from the 
+	  V1 shift matrix and filter product activity """
+	  
+  if adaptShiftLR:
+          shiftLR = adapt_shiftLR(state['img_mat'][0])
+	
+  filter_prod_activity = get_filter_prod_activity(state, shiftLR)
+  disp_mat = FilterTools.get_disparity_mat(state['v1_bases'])
+  
+  width = filter_prod_activity.shape[1]
+  height = filter_prod_activity.shape[2]
+  max_shift = (disp_mat.shape[0]-1) / 2
+  depth_mat = np.zeros([width, height], 'float')
+
+  for x in range(0,width):
+    for y in range(0,height):
+      if not max_activity_method:
+        depth_vec = np.dot(disp_mat, filter_prod_activity[:,x,y])
+        max_index = np.argmax(depth_vec)
+      else:  
+        max_index = np.argmax(disp_mat[:,np.argmax(filter_prod_activity[:,x,y])])
+    depth = max_index - max_shift
+    depth_mat[x,y] = depth
+  
+  return depth_mat
+# ------------------------------------------------------------
+# reading autostereogram
+auto_img=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\data\data.png'
+state =read_imgs(auto_img)
+width=10
+p = pick_gabor_params(100,width)
+filts = gabor_filter_generator(p,width)
+V1Tools.convolve_filters(state,filts,filts,5)
+
+# with the correct shiftLR
+output_map = get_depth_mat(state, 70)
+
+plt.plot(output_map.transpose()) 
+plt.show()
