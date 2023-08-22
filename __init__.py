@@ -1,3 +1,7 @@
+"""
+Innate Binocular Vision (ibv) code to run the experiments.
+"""
+
 from PIL import Image, ImageOps
 import time
 import json
@@ -5,21 +9,17 @@ import hashlib
 import numpy as np
 import random
 import os
-from matplotlib import pyplot as plt
+
 from scipy import signal
 from sklearn.decomposition import FastICA
 from sklearn.feature_extraction import image as skimage
-# from google.cloud import storage
+from google.cloud import storage
 
-#------------------------------------------------------
-# Next few lines calculates optimal p for percolation
 def calculate_optimal_p(t, r, a):
     p = t / (((np.pi * (r**2)/2))*(1+a))
     return p
-#---------------------------------------------------
-#   generating gabor filters based on formula here:
-#   https://inc.ucsd.edu/mplab/75/media//gabor.pdf
-#---------------------------------------------------
+
+
 def generate_gabor(size, shift, sigma, rotation, phase_shift, frequency):
     radius = (int((size[0]/2.0)), int((size[1]/2.0)))
     # a BUG is fixed in this line
@@ -52,14 +52,11 @@ def generate_gabor(size, shift, sigma, rotation, phase_shift, frequency):
 
 
 def open_norm(path, verbose=False):
-# Load image from path(autostereogram) and convert to grayscale
     raw = np.array(Image.open(path).convert("L"))
- # Normalize image,scale the pixel values to have zero mean and unit variance
     norm = (raw - np.mean(raw)) / np.std(raw)
-# If verbose is True, return both raw and normalized images
+
     if verbose:
         return raw, norm
-# Otherwise, return only the normalized image
     else:
         return norm
 
@@ -191,14 +188,14 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
 # In[7]:
 
 def unpack_filters(filters):
-    filters=np.array(filters).reshape(-1,1)
-    # print(filters.shape)
-    half_filter = int(filters.shape[0]/2)
-    filter_dim = int(np.sqrt(filters.shape[0]/2))
+    half_filter = int(filters.shape[1]/2)
+    filter_dim = int(np.sqrt(filters.shape[1]/2))
     first_eye = filters[:, 0:half_filter].reshape(-1, filter_dim, filter_dim)
     second_eye = filters[:, half_filter:].reshape(-1, filter_dim, filter_dim)
     return (first_eye, second_eye)
 
+
+# In[8]:
 
 def linear_disparity(first_eye, second_eye):
     disparity_map = np.empty([first_eye.shape[0], first_eye.shape[1]*2])
@@ -451,7 +448,7 @@ class LGN:
     def make_img_mat(self, show_img=True):
         """ return a matrix of 1's and 0's showing the activity in both layers """
         percentage_active = float(self.active.sum()) / self.allcells
-        print("active percentage: ", percentage_active)
+        print(percentage_active)
         if percentage_active < 0.05:
             print('LGN: activity less than low bound')
             raise ValueError('LGN: activity less than low bound')
@@ -481,10 +478,6 @@ class LGN:
             # plt.show()
 
         return img_array
-        
-#-------------------------------cloaud scripts--------------------------------------------------------
-
-
 
 def save_handler(bucket, path, input_array,suffix=None):
     if input_array.ndim == 2:
@@ -508,190 +501,49 @@ def save_handler(bucket, path, input_array,suffix=None):
 
 
 
-# ----------------------------------------------------------------------------------------------------
 
-# def cloud_experiment(bucket, experiment_subparameters,patch_max,filter_max):
-#     depthmap_blob = bucket.get_blob(experiment_subparameters["depthmap_path"])
-#     depthmap_blob.download_to_filename("dm.png")
-#     autostereogram_blob = bucket.get_blob(experiment_subparameters["autostereogram_path"])
-#     autostereogram_blob.download_to_filename("as.png")
 
-#     autostereogram = open_norm("as.png",verbose=False)
-#     groundtruth = np.array(Image.open("dm.png").convert("L"))
 
-#     try:
-#         res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
-#                                experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]["lgn_p"], experiment_subparameters["lgn_parameters"]["lgn_r"], experiment_subparameters["lgn_parameters"]["lgn_t"], experiment_subparameters["lgn_parameters"]["lgn_a"])
-#     except ValueError as err:
-#         raise err
+def cloud_experiment(bucket, experiment_subparameters,patch_max,filter_max):
+    depthmap_blob = bucket.get_blob(experiment_subparameters["depthmap_path"])
+    depthmap_blob.download_to_filename("dm.png")
+    autostereogram_blob = bucket.get_blob(experiment_subparameters["autostereogram_path"])
+    autostereogram_blob.download_to_filename("as.png")
+
+    autostereogram = open_norm("as.png",verbose=False)
+    groundtruth = np.array(Image.open("dm.png").convert("L"))
+
+    try:
+        res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
+                               experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]["lgn_p"], experiment_subparameters["lgn_parameters"]["lgn_r"], experiment_subparameters["lgn_parameters"]["lgn_t"], experiment_subparameters["lgn_parameters"]["lgn_a"])
+    except ValueError as err:
+        raise err
     
-#     filters = res[0]
-#     patches = res[1].reshape(-1, experiment_subparameters["patch_size"],experiment_subparameters["patch_size"])
-#     lgn = res[2]
+    filters = res[0]
+    patches = res[1].reshape(-1, experiment_subparameters["patch_size"],experiment_subparameters["patch_size"])
+    lgn = res[2]
 
 
-#     split_filters = unpack_filters(filters)
-
-#     save_handler(bucket, experiment_subparameters["lgn_dump"],lgn)
-#     save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[0][:filter_max],"0")
-#     save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[1][:filter_max],"1")
-#     save_handler(bucket, experiment_subparameters["patch_dump"],patches[:patch_max])
-
-
-
-#     disparity_map = linear_disparity(split_filters[0], split_filters[1])
-#     normalized_disparity = normalize_disparity(disparity_map)
-#     activity = generate_activity(autostereogram, experiment_subparameters["autostereogram_patch"], split_filters[0], split_filters[1], normalized_disparity)
-#     depth_estimate = estimate_depth(activity)
-
-#     save_handler(bucket, experiment_subparameters["activity_dump"],depth_estimate)
-
-
-
-#     correlation = np.corrcoef(depth_estimate.flatten(),
-#                               groundtruth.flatten())[0, 1]
-
-#     experiment_subparameters["correlation"] = correlation
-#     return experiment_subparameters
-
-    
-#--------------------------------------run------------------------------------
-def run_experiment_noGCP(num_filters, num_components, num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, autostereogram, asg_patch_size, groundtruth, experiment_folder):
-    autostereogram = open_norm(autostereogram,verbose=False)
-    groundtruth = np.array(Image.open(groundtruth).convert("L"))
-
-    filters = generate_filters(num_filters, num_components, num_patches,
-                               patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
     split_filters = unpack_filters(filters)
+
+    save_handler(bucket, experiment_subparameters["lgn_dump"],lgn)
+    save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[0][:filter_max],"0")
+    save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[1][:filter_max],"1")
+    save_handler(bucket, experiment_subparameters["patch_dump"],patches[:patch_max])
+
+
+
     disparity_map = linear_disparity(split_filters[0], split_filters[1])
-
-    # plt.hist(disparity_distribution(disparity_map))
-    # plt.show()
-
-    #normalized_disparity = disparity_map
-
     normalized_disparity = normalize_disparity(disparity_map)
-    # plt.hist(disparity_distribution(normalized_disparity))
-    # plt.show()
-
-    activity = generate_activity(autostereogram, asg_patch_size,
-                                 split_filters[0], split_filters[1], normalized_disparity)
+    activity = generate_activity(autostereogram, experiment_subparameters["autostereogram_patch"], split_filters[0], split_filters[1], normalized_disparity)
     depth_estimate = estimate_depth(activity)
+
+    save_handler(bucket, experiment_subparameters["activity_dump"],depth_estimate)
+
+
+
     correlation = np.corrcoef(depth_estimate.flatten(),
                               groundtruth.flatten())[0, 1]
-    current_time = time.localtime()
-    ident_hash = generate_ident_hash(num_filters, num_components, num_patches,
-                                     patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, time.time())
-    image_path = "%s/images/%s.png" % (experiment_folder, ident_hash)
-    data_path = "%s/json/%s.json" % (experiment_folder, ident_hash)
-    save_array(depth_estimate, "im.png")
 
-    params = {
-        "num_filters": num_filters,
-        "num_components": num_components,
-        "num_patches": num_patches,
-        "patch_size": patch_size,
-        "lgn_width": lgn_width,
-        "lgn_p": lgn_p,
-        "lgn_r": lgn_r,
-        "lgn_t": lgn_t,
-        "lgn_a": lgn_a,
-        "corr": np.abs(correlation),
-        "time": time.strftime('%a, %d %b %Y %H:%M:%S GMT', current_time),
-        "id": ident_hash
-    }
-    return params
-
-#---------------------------------------------------------
-#width=128, p=0.5, r=1.0, t=1, trans=0.
-num_filters=7
-num_components=2
-num_patches=10
-#patch size of 16x16
-patch_size=16
-lgn_width=128
-lgn_p=0.5
-lgn_r=1.0
-lgn_t=0
-lgn_a=10
-# ------------change directory to where your repository is located------------
-# autostereogram=r'C:\Users\19404\innate-binocular-vision\output\shift5_70patch.png'
-autostereogram=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output\shift5_70patch.png'
-# groundtruth=r'C:\Users\19404\innate-binocular-vision\output\dm1.png'
-groundtruth=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output\dm1.png'
-# experiment_folder=r'C:\Users\19404\innate-binocular-vision\output'
-experiment_folder=r'C:\vscode\innate-binocular-vision\innate-binocular-vision\output'
-asg_patch_size=10
-
-# run_experiment_noGCP(num_filters, num_components, num_patches,
-#                       patch_size, lgn_width, lgn_p, lgn_r, lgn_t,
-#                         lgn_a, autostereogram, asg_patch_size, 
-#                         groundtruth, experiment_folder)
-
-# --------------------------------------
-# raw,norm=open_norm(autostereogram,verbose=True)
-# print(raw.shape)
-# fig = plt.figure(figsize=(10, 7))
-# rows = 1
-# columns = 2
-# fig.add_subplot(rows, columns, 1)
-# plt.imshow(raw,cmap='gray')
-# plt.axis('off')
-# plt.title("raw")
-
-# fig.add_subplot(rows, columns, 2)
-# plt.imshow(norm,cmap='gray')
-# plt.axis('off')
-# plt.title("norm")
-# plt.show()
-# -------------------------for test purposes only--------------------
-def t_generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a):
-    half_comp = patch_size**2
-    patch_count = 0
-
-    while (patch_count < num_patches):
-        L = LGN(width=lgn_width, p=lgn_p, r=lgn_r, t=lgn_t, trans=lgn_a,
-                make_wave=True, num_layers=2, random_seed=random.randint(1, 100))
-        try:
-            layer_activity = L.make_img_mat()
-        except ValueError as err:
-            raise err
-
-        patches_1 = np.array(skimage.extract_patches_2d(layer_activity[0], (patch_size, patch_size)))
-        patches_2 = np.array(skimage.extract_patches_2d(layer_activity[1], (patch_size, patch_size)))
-        # reshaped_patches_1 = patches_1.reshape(-1,patches_1.shape[1]*patches_1.shape[1])
-        # reshaped_patches_2 = patches_2.reshape(-1,patches_2.shape[1]*patches_2.shape[1])
-        composite_patches = np.concatenate((patches_1, patches_2), axis=1)
-        blacklist = []
-        for x in range(composite_patches.shape[0]):
-            if composite_patches[x][:half_comp].std() == 0.0 or composite_patches[x][half_comp:].std() == 0.0:
-                blacklist.append(x)
-        composite_patches = np.delete(composite_patches, np.array(blacklist), axis=0)
-       
-        if (patch_count == 0):
-            patch_base = composite_patches
-        else:
-            patch_base = np.append(patch_base, composite_patches, axis=0)
-        
-        patch_count = patch_base.shape[0]
-    
-    return (patch_base[:num_patches], layer_activity)
-# ---------------------------------------------------------------
-
-# num_filters=7 num_components=2 num_patches=10 patch_size=16
-#  lgn_width=128 lgn_p=0.5 lgn_r=1.0 lgn_t=0 lgn_a=10
-patches,layer_activity = t_generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
-
-# filters = generate_filters(num_filters, num_components, num_patches,
-#                                patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
-print("should be 10:",len(patches),"\nshould be 2:", len(layer_activity))
-print((patches[1].shape))
-fig = plt.figure(figsize=(10, 7))
-rows = 1
-columns = 10
-for i in (1,columns-1):
-    fig.add_subplot(rows, columns, i)
-    plt.imshow(patches[i],cmap='gray')
-    plt.axis('off')
-    plt.title("patches[1]")
-plt.show()
+    experiment_subparameters["correlation"] = correlation
+    return experiment_subparameters
