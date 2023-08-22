@@ -45,15 +45,31 @@ def generate_2d_pink_noise(size=(70, 70), frequency=1.0, seed=0):
 #-----------------------------------making a depthmap for stereogram ----------------------------------------------
     #Function to create the circular depthmap for the autostereogram
 def create_circular_depthmap(shape=(270, 270), center=None, radius=100):
+    """
+    Creates a two-dimensional depth map with circular patterns.
+    
+    Args:
+        shape (tuple): Dimensions of the generated depth map. Default is (270, 270).
+        center (tuple): Coordinates of the center of the circular pattern. Default is None.
+        radius (int): Radius of the circular pattern. Default is 100.
+        
+    Returns:
+        numpy.ndarray: Generated depth map with circular patterns.
+    """
+    # Initialize an array of zeros to represent the depth map
     depthmap = np.zeros(shape, dtype=np.float)
     
+    # Parameters to define the circular pattern
     a = 100
     b = 170
     n = 270
-    r = radius#50
+    r = radius
     y, x = np.ogrid[-a:n-a, -b:n-b]
     
+    # Create a mask to select points within the circular region
     mask = x * x + y * y <= r * r
+    
+    # Assign a depth value of 4 to the points within the circular region
     depthmap[mask] = 4
     
     return depthmap

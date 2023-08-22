@@ -16,7 +16,8 @@ import matplotlib.pyplot
 img1_x = 0
 img2_x = 0
 
-def read_imgs(imgL="data/magiceye3.png", imgR=None, 
+# def read_imgs(imgL="data/magiceye3.png", imgR=None, 
+def read_imgs(imgL="data/data.png", imgR=None, 
   state={}):
   """ reads in either a filename or an array as a stereogram
   returns a state variable for V1Tools """
