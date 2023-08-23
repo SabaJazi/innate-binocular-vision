@@ -123,12 +123,12 @@ def scale_disparity(activity_map, disparity_map):
 def generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a):
     half_comp = patch_size**2
     patch_count = 0
-
+    
     while (patch_count < num_patches):
         L = LGN(width=lgn_width, p=lgn_p, r=lgn_r, t=lgn_t, trans=lgn_a,
                 make_wave=True, num_layers=2, random_seed=random.randint(1, 100))
         try:
-            layer_activity = L.make_img_mat()
+            layer_activity = L.make_img_mat(patch_count)
         except ValueError as err:
             raise err
 
@@ -445,10 +445,11 @@ class LGN:
                (active01[1, :, :] - mean1)).mean()
         return cov / (std0 * std1)
 
-    def make_img_mat(self, show_img=True):
+    def make_img_mat(self,p_c, show_img=True):
         """ return a matrix of 1's and 0's showing the activity in both layers """
         percentage_active = float(self.active.sum()) / self.allcells
-        print(percentage_active)
+        
+        print(p_c,': percentage_active:'  ,percentage_active)
         if percentage_active < 0.05:
             print('LGN: activity less than low bound')
             raise ValueError('LGN: activity less than low bound')
@@ -578,7 +579,8 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
 
     try:
         res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
-                               experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]["lgn_p"], experiment_subparameters["lgn_parameters"]["lgn_r"], experiment_subparameters["lgn_parameters"]["lgn_t"], experiment_subparameters["lgn_parameters"]["lgn_a"])
+                               experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"][0][2], 
+                               experiment_subparameters["lgn_parameters"][1][2] ,experiment_subparameters["lgn_parameters"][2][2], experiment_subparameters["lgn_parameters"][3][2])
     except ValueError as err:
         raise err
 
@@ -605,7 +607,7 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
     experiment_subparameters["correlation"] = correlation
     return experiment_subparameters
 # --------------------run------------------------
-# Define experiment parameters and paths
+
 experiment_subparameters = {
     "depthmap_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\dm.png",
     "autostereogram_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\autostereogram.png",
@@ -615,7 +617,7 @@ experiment_subparameters = {
     "patch_size": 8,
     "lgn_size": 64,
     "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]]
-    # ... other parameters ...
+    
 }
 # [[0.5 1.5 10], [4 4 1] ,[1 4 8], [0.05 0.05 1]]
 # Set the maximum values for patch and filter (you can adjust these)
