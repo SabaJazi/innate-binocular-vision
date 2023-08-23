@@ -609,14 +609,22 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
 # --------------------run------------------------
 
 experiment_subparameters = {
-    "depthmap_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\dm.png",
-    "autostereogram_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\autostereogram.png",
+    "depthmap_path": r"C:\Users\19404\innate-binocular-vision\dm.png",
+    "autostereogram_path": r"C:\Users\19404\innate-binocular-vision\autostereogram.png",
     "num_filters": 2000,
     "num_components": 20,
     "num_patches": 100000,
     "patch_size": 8,
     "lgn_size": 64,
-    "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]]
+    "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]],
+    "lgn_dump": ,
+    "filter_dump": ,
+    "patch_dump":,
+   "autostereogram_patch":,
+   "activity_dump":,
+   "correlation":
+
+
     
 }
 # [[0.5 1.5 10], [4 4 1] ,[1 4 8], [0.05 0.05 1]]
