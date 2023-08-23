@@ -609,22 +609,21 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
 # --------------------run------------------------
 
 experiment_subparameters = {
-    "depthmap_path": r"C:\Users\19404\innate-binocular-vision\dm.png",
-    "autostereogram_path": r"C:\Users\19404\innate-binocular-vision\autostereogram.png",
-    "num_filters": 2000,
+    "depthmap_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\dm.png",
+    "autostereogram_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\autostereogram.png",
+    # "num_filters": 2000,
+    "num_filters": 200,
     "num_components": 20,
     "num_patches": 100000,
     "patch_size": 8,
     "lgn_size": 64,
     "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]],
-    "lgn_dump": ,
-    "filter_dump": ,
-    "patch_dump":,
-   "autostereogram_patch":,
-   "activity_dump":,
-   "correlation":
-
-
+    "lgn_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+    "filter_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+    "patch_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+    "autostereogram_patch":r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+    "activity_dump":r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+    "correlation":r"C:\vscode\innate-binocular-vision\innate-binocular-vision"
     
 }
 # [[0.5 1.5 10], [4 4 1] ,[1 4 8], [0.05 0.05 1]]
