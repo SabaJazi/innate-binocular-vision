@@ -13,7 +13,7 @@ import os
 from scipy import signal
 from sklearn.decomposition import FastICA
 from sklearn.feature_extraction import image as skimage
-from google.cloud import storage
+# from google.cloud import storage
 
 def calculate_optimal_p(t, r, a):
     p = t / (((np.pi * (r**2)/2))*(1+a))
@@ -310,11 +310,11 @@ def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_wid
     image_path = "%s/images/%s.png" % (experiment_folder, ident_hash)
     data_path = "%s/json/%s.json" % (experiment_folder, ident_hash)
     save_array(depth_estimate, "im.png")
-    client = storage.Client()
-    bucket = client.get_bucket('ibvdata')
-    blob = bucket.blob(image_path)
-    blob.upload_from_filename("im.png")
-    blob = bucket.blob(data_path)
+    # client = storage.Client()
+    # bucket = client.get_bucket('ibvdata')
+    # blob = bucket.blob(image_path)
+    # blob.upload_from_filename("im.png")
+    # blob = bucket.blob(data_path)
     params = {
         "num_filters": num_filters,
         "num_components": num_components,
@@ -329,7 +329,7 @@ def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_wid
         "time": time.strftime('%a, %d %b %Y %H:%M:%S GMT', current_time),
         "id": ident_hash
     }
-    blob.upload_from_string(json.dumps(params))
+    # blob.upload_from_string(json.dumps(params))
 
 
     return params
@@ -479,71 +479,152 @@ class LGN:
 
         return img_array
 
-def save_handler(bucket, path, input_array,suffix=None):
+# def save_handler(bucket, path, input_array,suffix=None):
+#     if input_array.ndim == 2:
+#         save_array(input_array, "tmp.png")
+#         blob = bucket.blob(path)
+#         blob.upload_from_filename("tmp.png")
+#         os.remove("tmp.png")
+#         return
+
+#     for idx, input in enumerate(input_array):
+#         cast_array = (255.0 / input.max() * (input - input.min())).astype(np.uint8)
+#         save_image = Image.fromarray(cast_array)
+#         save_image.save("tmp.png")
+#         if suffix != None:
+#             idx_path = "{}/{}/{}".format(path,suffix,idx)
+#         else:
+#             idx_path = "{}/{}".format(path,idx)
+#         blob = bucket.blob(idx_path)
+#         blob.upload_from_filename("tmp.png")
+#         os.remove("tmp.png")
+
+
+
+
+
+
+# def cloud_experiment(bucket, experiment_subparameters,patch_max,filter_max):
+#     depthmap_blob = bucket.get_blob(experiment_subparameters["depthmap_path"])
+#     depthmap_blob.download_to_filename("dm.png")
+#     autostereogram_blob = bucket.get_blob(experiment_subparameters["autostereogram_path"])
+#     autostereogram_blob.download_to_filename("as.png")
+
+#     autostereogram = open_norm("as.png",verbose=False)
+#     groundtruth = np.array(Image.open("dm.png").convert("L"))
+
+#     try:
+#         res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
+#                                experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]["lgn_p"], experiment_subparameters["lgn_parameters"]["lgn_r"], experiment_subparameters["lgn_parameters"]["lgn_t"], experiment_subparameters["lgn_parameters"]["lgn_a"])
+#     except ValueError as err:
+#         raise err
+    
+#     filters = res[0]
+#     patches = res[1].reshape(-1, experiment_subparameters["patch_size"],experiment_subparameters["patch_size"])
+#     lgn = res[2]
+
+
+#     split_filters = unpack_filters(filters)
+
+#     save_handler(bucket, experiment_subparameters["lgn_dump"],lgn)
+#     save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[0][:filter_max],"0")
+#     save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[1][:filter_max],"1")
+#     save_handler(bucket, experiment_subparameters["patch_dump"],patches[:patch_max])
+
+
+
+#     disparity_map = linear_disparity(split_filters[0], split_filters[1])
+#     normalized_disparity = normalize_disparity(disparity_map)
+#     activity = generate_activity(autostereogram, experiment_subparameters["autostereogram_patch"], split_filters[0], split_filters[1], normalized_disparity)
+#     depth_estimate = estimate_depth(activity)
+
+#     save_handler(bucket, experiment_subparameters["activity_dump"],depth_estimate)
+
+
+
+#     correlation = np.corrcoef(depth_estimate.flatten(),
+#                               groundtruth.flatten())[0, 1]
+
+#     experiment_subparameters["correlation"] = correlation
+#     return experiment_subparameters
+
+# -----------local operation---------------
+
+def save_handler_local(path, input_array, suffix=None):
     if input_array.ndim == 2:
         save_array(input_array, "tmp.png")
-        blob = bucket.blob(path)
-        blob.upload_from_filename("tmp.png")
-        os.remove("tmp.png")
+        os.rename("tmp.png", os.path.join(path, "tmp.png"))
         return
 
     for idx, input in enumerate(input_array):
         cast_array = (255.0 / input.max() * (input - input.min())).astype(np.uint8)
         save_image = Image.fromarray(cast_array)
         save_image.save("tmp.png")
-        if suffix != None:
-            idx_path = "{}/{}/{}".format(path,suffix,idx)
+        
+        if suffix is not None:
+            idx_path = os.path.join(path, suffix, str(idx))
         else:
-            idx_path = "{}/{}".format(path,idx)
-        blob = bucket.blob(idx_path)
-        blob.upload_from_filename("tmp.png")
-        os.remove("tmp.png")
+            idx_path = os.path.join(path, str(idx))
+        
+        os.makedirs(idx_path, exist_ok=True)
+        os.rename("tmp.png", os.path.join(idx_path, "tmp.png"))
 
+def local_experiment(experiment_subparameters, patch_max, filter_max):
+    depthmap_path = experiment_subparameters["depthmap_path"]
+    autostereogram_path = experiment_subparameters["autostereogram_path"]
 
-
-
-
-
-def cloud_experiment(bucket, experiment_subparameters,patch_max,filter_max):
-    depthmap_blob = bucket.get_blob(experiment_subparameters["depthmap_path"])
-    depthmap_blob.download_to_filename("dm.png")
-    autostereogram_blob = bucket.get_blob(experiment_subparameters["autostereogram_path"])
-    autostereogram_blob.download_to_filename("as.png")
-
-    autostereogram = open_norm("as.png",verbose=False)
-    groundtruth = np.array(Image.open("dm.png").convert("L"))
+    autostereogram = open_norm(autostereogram_path, verbose=False)
+    groundtruth = np.array(Image.open(depthmap_path).convert("L"))
 
     try:
         res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
                                experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]["lgn_p"], experiment_subparameters["lgn_parameters"]["lgn_r"], experiment_subparameters["lgn_parameters"]["lgn_t"], experiment_subparameters["lgn_parameters"]["lgn_a"])
     except ValueError as err:
         raise err
-    
-    filters = res[0]
-    patches = res[1].reshape(-1, experiment_subparameters["patch_size"],experiment_subparameters["patch_size"])
-    lgn = res[2]
 
+    filters = res[0]
+    patches = res[1].reshape(-1, experiment_subparameters["patch_size"], experiment_subparameters["patch_size"])
+    lgn = res[2]
 
     split_filters = unpack_filters(filters)
 
-    save_handler(bucket, experiment_subparameters["lgn_dump"],lgn)
-    save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[0][:filter_max],"0")
-    save_handler(bucket, experiment_subparameters["filter_dump"],split_filters[1][:filter_max],"1")
-    save_handler(bucket, experiment_subparameters["patch_dump"],patches[:patch_max])
-
-
+    save_handler_local(experiment_subparameters["lgn_dump"], lgn)
+    save_handler_local(experiment_subparameters["filter_dump"], split_filters[0][:filter_max], "0")
+    save_handler_local(experiment_subparameters["filter_dump"], split_filters[1][:filter_max], "1")
+    save_handler_local(experiment_subparameters["patch_dump"], patches[:patch_max])
 
     disparity_map = linear_disparity(split_filters[0], split_filters[1])
     normalized_disparity = normalize_disparity(disparity_map)
     activity = generate_activity(autostereogram, experiment_subparameters["autostereogram_patch"], split_filters[0], split_filters[1], normalized_disparity)
     depth_estimate = estimate_depth(activity)
 
-    save_handler(bucket, experiment_subparameters["activity_dump"],depth_estimate)
+    save_handler_local(experiment_subparameters["activity_dump"], depth_estimate)
 
-
-
-    correlation = np.corrcoef(depth_estimate.flatten(),
-                              groundtruth.flatten())[0, 1]
+    correlation = np.corrcoef(depth_estimate.flatten(), groundtruth.flatten())[0, 1]
 
     experiment_subparameters["correlation"] = correlation
     return experiment_subparameters
+# --------------------run------------------------
+# Define experiment parameters and paths
+experiment_subparameters = {
+    "depthmap_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\dm.png",
+    "autostereogram_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\autostereogram.png",
+    "num_filters": 2000,
+    "num_components": 20,
+    "num_patches": 100000,
+    "patch_size": 8,
+    "lgn_size": 64,
+    "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]]
+    # ... other parameters ...
+}
+# [[0.5 1.5 10], [4 4 1] ,[1 4 8], [0.05 0.05 1]]
+# Set the maximum values for patch and filter (you can adjust these)
+patch_max = 10
+filter_max = 5
+
+# Call the local_experiment function
+
+result = local_experiment(experiment_subparameters, patch_max, filter_max)
+
+# Print the result or perform other actions as needed
+print("Experiment result:", result)
