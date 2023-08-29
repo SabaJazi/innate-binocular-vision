@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 
 def get_parameters(experiment_id):
-    parameters_file = "C:\vscode\innate-binocular-vision\innate-binocular-vision\experiment{}.json".format(experiment_id)
+    parameters_file = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiment{}.json".format(experiment_id)
     with open(parameters_file, "r") as f:
         experiment_parameters = json.load(f)
     return experiment_parameters
@@ -17,7 +17,8 @@ def run_workload(experiment_parameters):
 
     started = []
     total = []
-    path = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiments\{}\outputs\json".format(experiment_parameters["experiment_id"])
+    # path = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiments\{}\outputs\json".format(experiment_parameters["experiment_id"])
+    path = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiments1\outputs\json"
 
     # List files in the output JSON directory
     started = os.listdir(path)
@@ -29,15 +30,15 @@ def run_workload(experiment_parameters):
         diff = list(set(total) - set(started))
         if len(diff) == 0:
             break
-        
+        # choose one of names from json file and
+        #  get the parameters of it
         selection = random.choice(diff)
         experiment_subparameters = extract_subparameters(
             experiment_parameters,
             experiment_parameters["lgn_parameter_set"][total.index(selection)]
         )
-        
-        ex = check_log(experiment_subparameters)
-        work(ex)
+        # run experiment for that set of parameters
+        work(experiment_subparameters)
 #  ------------------------ 
 
 def extract_subparameters(experiment_parameters, lgn_parameters):
@@ -57,39 +58,13 @@ def extract_subparameters(experiment_parameters, lgn_parameters):
     "started": None,
     "finished": None,
     "correlation": None,
-    "lgn_dump": "experiments/{}/outputs/images/{}/layers".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "patch_dump": "experiments/{}/outputs/images/{}/patches".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "filter_dump": "experiments/{}/outputs/images/{}/filters".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "activity_dump": "experiments/{}/outputs/images/{}/activity".format(experiment_parameters["experiment_id"],lgn_parameters["name"])
+    "lgn_dump": "C:/vscode/innate-binocular-vision/innate-binocular-vision/experiments/{}/outputs/images/{}/layers".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    "patch_dump": "C:/vscode/innate-binocular-vision/innate-binocular-vision/experiments/{}/outputs/images/{}/patches".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    "filter_dump": "C:/vscode/innate-binocular-vision/innate-binocular-vision/experiments/{}/outputs/images/{}/filters".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    "activity_dump": "C:/vscode/innate-binocular-vision/innate-binocular-vision/experiments/{}/outputs/images/{}/activity".format(experiment_parameters["experiment_id"],lgn_parameters["name"])
     }
     return subparameters
 
-
-def check_log(experiment_subparameters):
-    experiment_id = experiment_subparameters["experiment_id"]
-    lgn_parameter_name = experiment_subparameters["lgn_parameters"]["name"]
-    log_path = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiments\{}\outputs\json\{}.json".format(experiment_id, lgn_parameter_name)
-    
-    if not os.path.exists(log_path):
-        if experiment_subparameters["started"] is None:
-            experiment_subparameters["started"] = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-            print("started")
-            print(experiment_subparameters["lgn_parameters"]["name"])
-            print(experiment_subparameters)
-            
-            with open(log_path, "w") as log_file:
-                json.dump(experiment_subparameters, log_file, indent=4, separators=(',', ': '))
-            
-            return experiment_subparameters
-    else:
-        # Check this logic
-        if experiment_subparameters["correlation"] is not None:
-            experiment_subparameters["finished"] = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-            
-            with open(log_path, "w") as log_file:
-                json.dump(experiment_subparameters, log_file, indent=4, separators=(',', ': '))
-            
-            return experiment_subparameters
 
 def work(experiment_subparameters):
     print(experiment_subparameters["depthmap_path"])
@@ -106,15 +81,13 @@ def work(experiment_subparameters):
         if str(err) == 'LGN: activity greater than high bound':
             results["correlation"] = 2.0
 
-    check_log(results)
-
-
-
 def run():
-    parser = argparse.ArgumentParser(description="Python script to create ibv experiment parameter file")
-    parser.add_argument("experiment_id", help="specify experiment id")
-    args = parser.parse_args()
-    p = get_parameters(args.experiment_id)
+    experiment_id = 1
+    # parser = argparse.ArgumentParser(description="Python script to create ibv experiment parameter file")
+    # parser.add_argument("experiment_id", help="specify experiment id")
+    # args = parser.parse_args()
+    # p = get_parameters(args.experiment_id)
+    p = get_parameters(experiment_id)
     run_workload(p)
 
 

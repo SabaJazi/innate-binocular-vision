@@ -265,9 +265,6 @@ def generate_ident_hash(num_filters, num_components, num_patches, patch_size, lg
 
 # In[14]:
 
-
-
-
 # In[15]:
 
 def disparity_distribution(disparity_map):
@@ -502,16 +499,20 @@ def save_handler_local(path, input_array, suffix=None):
         os.rename("tmp.png", os.path.join(idx_path, "tmp.png"))
 
 def local_experiment(experiment_subparameters, patch_max, filter_max):
-    depthmap_path = experiment_subparameters["depthmap_path"]
+    current_dir = os.getcwd()
+    depthmap_path =  experiment_subparameters["depthmap_path"]
+    # depthmap_path = os.path.join(current_dir, experiment_subparameters["depthmap_path"])
+
     autostereogram_path = experiment_subparameters["autostereogram_path"]
+    # autostereogram_path = os.path.join(current_dir,experiment_subparameters["autostereogram_path"])
 
     autostereogram = open_norm(autostereogram_path, verbose=False)
     groundtruth = np.array(Image.open(depthmap_path).convert("L"))
 
     try:
         res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
-                               experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"][0][2], 
-                               experiment_subparameters["lgn_parameters"][1][2] ,experiment_subparameters["lgn_parameters"][2][2], experiment_subparameters["lgn_parameters"][3][2])
+                               experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]['lgn_a'], 
+                               experiment_subparameters["lgn_parameters"]['lgn_r'] ,experiment_subparameters["lgn_parameters"]['lgn_p'], experiment_subparameters["lgn_parameters"]['lgn_t'])
     except ValueError as err:
         raise err
 
@@ -539,24 +540,24 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
     return experiment_subparameters
 # --------------------run------------------------
 
-experiment_subparameters = {
-    "depthmap_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\dm.png",
-    "autostereogram_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\autostereogram.png",
-    # "num_filters": 2000,
-    "num_filters": 200,
-    "num_components": 20,
-    "num_patches": 100000,
-    "patch_size": 8,
-    "lgn_size": 64,
-    "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]],
-    "lgn_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-    "filter_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-    "patch_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-    "autostereogram_patch":r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-    "activity_dump":r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-    "correlation":r"C:\vscode\innate-binocular-vision\innate-binocular-vision"
+# experiment_subparameters = {
+#     "depthmap_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\dm.png",
+#     "autostereogram_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\autostereogram.png",
+#     # "num_filters": 2000,
+#     "num_filters": 200,
+#     "num_components": 20,
+#     "num_patches": 100000,
+#     "patch_size": 8,
+#     "lgn_size": 64,
+#     "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]],
+#     "lgn_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+#     "filter_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+#     "patch_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+#     "autostereogram_patch":r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+#     "activity_dump":r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
+#     "correlation":r"C:\vscode\innate-binocular-vision\innate-binocular-vision"
     
-}
+# }
 # [[0.5 1.5 10], [4 4 1] ,[1 4 8], [0.05 0.05 1]]
 # Set the maximum values for patch and filter 
 # (original path_max=100000, original filter=200)
@@ -565,7 +566,7 @@ filter_max = 20
 
 # Call the local_experiment function
 
-result = local_experiment(experiment_subparameters, patch_max, filter_max)
+# result = local_experiment(experiment_subparameters, patch_max, filter_max)
 
 # Print the result or perform other actions as needed
-print("Experiment result:", result)
+# print("Experiment result:", result)
