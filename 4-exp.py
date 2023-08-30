@@ -58,10 +58,10 @@ def extract_subparameters(experiment_parameters, lgn_parameters):
     "started": None,
     "finished": None,
     "correlation": None,
-    "lgn_dump": "C:/vscode/innate-binocular-vision/innate-binocular-vision/experiments/{}/outputs/images/{}/layers".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "patch_dump": "C:/vscode/innate-binocular-vision/innate-binocular-vision/experiments/{}/outputs/images/{}/patches".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "filter_dump": "C:/vscode/innate-binocular-vision/innate-binocular-vision/experiments/{}/outputs/images/{}/filters".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "activity_dump": "C:/vscode/innate-binocular-vision/innate-binocular-vision/experiments/{}/outputs/images/{}/activity".format(experiment_parameters["experiment_id"],lgn_parameters["name"])
+    "lgn_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\layers".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    "patch_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\patches".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    "filter_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\filters".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    "activity_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\activity".format(experiment_parameters["experiment_id"],lgn_parameters["name"])
     }
     return subparameters
 
@@ -83,10 +83,6 @@ def work(experiment_subparameters):
 
 def run():
     experiment_id = 1
-    # parser = argparse.ArgumentParser(description="Python script to create ibv experiment parameter file")
-    # parser.add_argument("experiment_id", help="specify experiment id")
-    # args = parser.parse_args()
-    # p = get_parameters(args.experiment_id)
     p = get_parameters(experiment_id)
     run_workload(p)
 

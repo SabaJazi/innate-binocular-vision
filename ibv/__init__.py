@@ -15,6 +15,7 @@ from sklearn.decomposition import FastICA
 from sklearn.feature_extraction import image as skimage
 # from google.cloud import storage
 from colorama import Fore,Style
+import logging
 
 def calculate_optimal_p(t, r, a):
     p = t / (((np.pi * (r**2)/2))*(1+a))
@@ -122,6 +123,9 @@ def scale_disparity(activity_map, disparity_map):
 # In[4]:
 
 def generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a):
+    print(Fore.GREEN + 'generate_patches:')
+    print(Style.RESET_ALL)
+
     half_comp = patch_size**2
     patch_count = 0
     
@@ -167,6 +171,9 @@ def generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lg
 # In[5]:
 
 def perform_ica(num_components, patches):
+
+    print(Fore.GREEN + 'perform_ica:')
+    print(Style.RESET_ALL)
     # Run ICA on all the patches and return generated components
     # note, sensitive to n_components
     ica_instance = FastICA(n_components=num_components,
@@ -185,16 +192,20 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
     filter_count = 0
     while (filter_count < num_filters):
         try:
-            patches,_ = generate_patches(
+            patches = generate_patches(
             num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
         except ValueError as err:
             raise err
         filters = perform_ica(num_components, patches[0])
+        # print(filters)
         if (filter_count == 0):
+            print('check1' )
             filter_base = filters
         else:
+            print('check2' )
             filter_base = np.append(filter_base, filters, axis=0)
         filter_count = filter_base.shape[0]
+        print('filter count:' ,filter_count)
 
     return (filter_base[:num_filters], patches[0], patches[1])
 
@@ -471,8 +482,8 @@ class LGN:
         return cov / (std0 * std1)
 
     def make_img_mat(self,p_c, show_img=True):
-        print(Fore.RED + 'make_img_mat:')
-        print(Style.RESET_ALL)
+        # print(Fore.RED + 'make_img_mat:')
+        # print(Style.RESET_ALL)
 
         """ return a matrix of 1's and 0's showing the activity in both layers """
         percentage_active = float(self.active.sum()) / self.allcells
@@ -520,10 +531,15 @@ class LGN:
 
 
 def save_handler_local(path, input_array, suffix=None):
-    if input_array.ndim == 2:
-        save_array(input_array, "tmp.png")
-        os.rename("tmp.png", os.path.join(path, "tmp.png"))
-        return
+    # if input_array.ndim == 2:
+    #     save_array(input_array, "tmp2.png")
+    #     if suffix is not None:
+    #         idx_path = os.path.join(path, suffix, "2")
+    #     else:
+    #         idx_path = os.path.join(path, "2")
+    #     os.makedirs(idx_path, exist_ok=True)
+    #     os.rename("tmp2.png", os.path.join(path, "tmp2.png"))
+    #     return
 
     for idx, input in enumerate(input_array):
         cast_array = (255.0 / input.max() * (input - input.min())).astype(np.uint8)
@@ -537,10 +553,12 @@ def save_handler_local(path, input_array, suffix=None):
         os.makedirs(idx_path, exist_ok=True)
         # suff="tmp"+time.strftime("%m%d%H%m%s")+".png"
 
-        os.rename("tmp.png", os.path.join(idx_path, "tmp.png"))
+        # os.rename("tmp.png", os.path.join(idx_path, "tmp.png"))
+        name="tmp"+str(idx)+".png"
+        os.rename("tmp.png", os.path.join(idx_path, name))
 
 def local_experiment(experiment_subparameters, patch_max, filter_max):
-    print(Fore.RED + 'local_experiment:')
+    print(Fore.BLUE + 'local_experiment:')
     print(Style.RESET_ALL)
 
     current_dir = os.getcwd()
