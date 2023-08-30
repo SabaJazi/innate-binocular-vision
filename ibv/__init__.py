@@ -9,11 +9,12 @@ import hashlib
 import numpy as np
 import random
 import os
-
+import matplotlib.pyplot as plt
 from scipy import signal
 from sklearn.decomposition import FastICA
 from sklearn.feature_extraction import image as skimage
 # from google.cloud import storage
+from colorama import Fore,Style
 
 def calculate_optimal_p(t, r, a):
     p = t / (((np.pi * (r**2)/2))*(1+a))
@@ -133,16 +134,26 @@ def generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lg
             raise err
 
         patches_1 = np.array(skimage.extract_patches_2d(layer_activity[0], (patch_size, patch_size)))
+        # plt.imshow(patches_1[0])
+        # plt.title('patch sample from layer 1')
+        # plt.show()
         patches_2 = np.array(skimage.extract_patches_2d(layer_activity[1], (patch_size, patch_size)))
+        # plt.imshow(patches_2[0])
+        # plt.title('patch sample from layer 2')
+        # plt.show()
         reshaped_patches_1 = patches_1.reshape(-1,patches_1.shape[1]*patches_1.shape[1])
         reshaped_patches_2 = patches_2.reshape(-1,patches_2.shape[1]*patches_2.shape[1])
         composite_patches = np.concatenate((reshaped_patches_1, reshaped_patches_2), axis=1)
+
+        # removing the patches that don't have variance in pixel values
         blacklist = []
         for x in range(composite_patches.shape[0]):
             if composite_patches[x][:half_comp].std() == 0.0 or composite_patches[x][half_comp:].std() == 0.0:
                 blacklist.append(x)
         composite_patches = np.delete(composite_patches, np.array(blacklist), axis=0)
-       
+        # plt.imshow(composite_patches)
+        # plt.title('Composit patch')
+        # plt.show()
         if (patch_count == 0):
             patch_base = composite_patches
         else:
@@ -168,10 +179,13 @@ def perform_ica(num_components, patches):
 # In[6]:
 
 def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a):
+    print(Fore.RED + 'generate_filters:')
+    print(Style.RESET_ALL)
+
     filter_count = 0
     while (filter_count < num_filters):
         try:
-            patches = generate_patches(
+            patches,_ = generate_patches(
             num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
         except ValueError as err:
             raise err
@@ -188,6 +202,9 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
 # In[7]:
 
 def unpack_filters(filters):
+    print(Fore.RED + 'Unpacking filters:')
+    print(Style.RESET_ALL)
+
     half_filter = int(filters.shape[1]/2)
     filter_dim = int(np.sqrt(filters.shape[1]/2))
     first_eye = filters[:, 0:half_filter].reshape(-1, filter_dim, filter_dim)
@@ -198,6 +215,9 @@ def unpack_filters(filters):
 # In[8]:
 
 def linear_disparity(first_eye, second_eye):
+    print(Fore.RED + 'linear_disparity:')
+    print(Style.RESET_ALL)
+
     disparity_map = np.empty([first_eye.shape[0], first_eye.shape[1]*2])
     for index in range(first_eye.shape[0]):
         disparity = linear_convolution(first_eye[index], second_eye[index])
@@ -268,6 +288,9 @@ def generate_ident_hash(num_filters, num_components, num_patches, patch_size, lg
 # In[15]:
 
 def disparity_distribution(disparity_map):
+    print(Fore.RED + 'disparity_distribution:')
+    print(Style.RESET_ALL)
+
     dist = np.empty([disparity_map.shape[0]])
     for x in range(disparity_map.shape[0]):
         peak = np.abs(np.nanargmax(
@@ -279,6 +302,8 @@ def disparity_distribution(disparity_map):
 # In[16]:
 
 def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, autostereogram, asg_patch_size, groundtruth, experiment_folder):
+    print(Fore.RED + 'run_experiment:')
+    print(Style.RESET_ALL)
     autostereogram = open_norm(autostereogram,verbose=False)
     groundtruth = np.array(Image.open(groundtruth).convert("L"))
 
@@ -287,14 +312,17 @@ def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_wid
     split_filters = unpack_filters(filters)
     disparity_map = linear_disparity(split_filters[0], split_filters[1])
 
-    # plt.hist(disparity_distribution(disparity_map))
-    # plt.show()
+    plt.hist(disparity_distribution(disparity_map))
+    plt.title('disparity histogram')
+    plt.show()
 
     #normalized_disparity = disparity_map
 
     normalized_disparity = normalize_disparity(disparity_map)
-    # plt.hist(disparity_distribution(normalized_disparity))
-    # plt.show()
+    plt.hist(disparity_distribution(normalized_disparity))
+    plt.title('normalized disparity histogram')
+
+    plt.show()
 
     activity = generate_activity(autostereogram, asg_patch_size,
                                  split_filters[0], split_filters[1], normalized_disparity)
@@ -443,6 +471,9 @@ class LGN:
         return cov / (std0 * std1)
 
     def make_img_mat(self,p_c, show_img=True):
+        print(Fore.RED + 'make_img_mat:')
+        print(Style.RESET_ALL)
+
         """ return a matrix of 1's and 0's showing the activity in both layers """
         percentage_active = float(self.active.sum()) / self.allcells
         
@@ -457,6 +488,7 @@ class LGN:
 
         img_array = np.zeros([self.num_layers, self.width, self.width])
         w = self.width
+
         for l in range(self.num_layers):
             img = np.zeros([w, w], float)
             conv = 0
@@ -464,6 +496,7 @@ class LGN:
                 for y in range(0, w-1):
                     if self.active[l, x, y]:
                         img[x, y] = 1
+                        # Defines a 3x3 convolution kernel
                         normal = np.array([[1,1,1],[1,0,1],[1,1,1]])
                         conv2d = signal.convolve2d(img, normal, boundary='symm', mode='same')
                         thresh = 4.0
@@ -472,7 +505,15 @@ class LGN:
                         conv = conv2d
 
             img_array[l] = conv
+            # Next line shows each of activity patern 1 by 1
             # plt.imshow(img)
+            # plt.title("LGN activity 64x64 layer {}".format(l+1))
+
+            # plt.show()
+
+            # plt.imshow(conv)
+            # plt.title("Convolved LGN activity layer {}".format(l+1))
+
             # plt.show()
 
         return img_array
@@ -499,6 +540,9 @@ def save_handler_local(path, input_array, suffix=None):
         os.rename("tmp.png", os.path.join(idx_path, "tmp.png"))
 
 def local_experiment(experiment_subparameters, patch_max, filter_max):
+    print(Fore.RED + 'local_experiment:')
+    print(Style.RESET_ALL)
+
     current_dir = os.getcwd()
     depthmap_path =  experiment_subparameters["depthmap_path"]
     # depthmap_path = os.path.join(current_dir, experiment_subparameters["depthmap_path"])
