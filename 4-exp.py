@@ -12,7 +12,7 @@ def get_parameters(experiment_id):
         experiment_parameters = json.load(f)
     return experiment_parameters
  
- #--------------------------
+ #--------------------------------------------------------
 def run_workload(experiment_parameters):
 
     started = []
@@ -39,7 +39,7 @@ def run_workload(experiment_parameters):
         )
         # run experiment for that set of parameters
         work(experiment_subparameters)
-#  ------------------------ 
+#  ---------------------------------------------------------- 
 
 def extract_subparameters(experiment_parameters, lgn_parameters):
     #pass index instead of lgn_parameters?
@@ -67,7 +67,7 @@ def extract_subparameters(experiment_parameters, lgn_parameters):
 
 
 def work(experiment_subparameters):
-    print(experiment_subparameters["depthmap_path"])
+    # print(experiment_subparameters["depthmap_path"])
     try:
         results = ibv.local_experiment(experiment_subparameters, 5, 5)
     except ValueError as err:
