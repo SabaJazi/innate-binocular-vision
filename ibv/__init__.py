@@ -177,7 +177,7 @@ def perform_ica(num_components, patches):
     # Run ICA on all the patches and return generated components
     # note, sensitive to n_components
     ica_instance = FastICA(n_components=num_components,
-                           random_state=1, max_iter=1000000)
+                           random_state=1, max_iter=1000000, whiten='standard')
     icafit = ica_instance.fit(patches)
     ica_components = icafit.components_
     return ica_components
@@ -191,16 +191,18 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
 
     filter_count = 0
     while (filter_count < num_filters):
-        try:
-            patches = generate_patches(
-            num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
-        except ValueError as err:
-            raise err
+        # try:
+        patches = generate_patches(
+        num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
+        # except ValueError as err:
+            # raise err
         filters = perform_ica(num_components, patches[0])
         # print(filters)
         if (filter_count == 0):
             print('check1' )
             filter_base = filters
+            filter_count = filter_base.shape[0]
+            print('filter count:' ,filter_count)
         else:
             print('check2' )
             filter_base = np.append(filter_base, filters, axis=0)
@@ -584,17 +586,17 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
 
     split_filters = unpack_filters(filters)
 
-    save_handler_local(experiment_subparameters["lgn_dump"], lgn)
-    save_handler_local(experiment_subparameters["filter_dump"], split_filters[0][:filter_max], "0")
-    save_handler_local(experiment_subparameters["filter_dump"], split_filters[1][:filter_max], "1")
-    save_handler_local(experiment_subparameters["patch_dump"], patches[:patch_max])
+    # save_handler_local(experiment_subparameters["lgn_dump"], lgn)
+    # save_handler_local(experiment_subparameters["filter_dump"], split_filters[0][:filter_max], "0")
+    # save_handler_local(experiment_subparameters["filter_dump"], split_filters[1][:filter_max], "1")
+    # save_handler_local(experiment_subparameters["patch_dump"], patches[:patch_max])
 
     disparity_map = linear_disparity(split_filters[0], split_filters[1])
     normalized_disparity = normalize_disparity(disparity_map)
     activity = generate_activity(autostereogram, experiment_subparameters["autostereogram_patch"], split_filters[0], split_filters[1], normalized_disparity)
     depth_estimate = estimate_depth(activity)
 
-    save_handler_local(experiment_subparameters["activity_dump"], depth_estimate)
+    # save_handler_local(experiment_subparameters["activity_dump"], depth_estimate)
 
     correlation = np.corrcoef(depth_estimate.flatten(), groundtruth.flatten())[0, 1]
 

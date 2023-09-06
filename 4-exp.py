@@ -7,7 +7,9 @@ import argparse
 import numpy as np
 
 def get_parameters(experiment_id):
-    parameters_file = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiment{}.json".format(experiment_id)
+    # parameters_file = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiment{}.json".format(experiment_id)
+    parameters_file = r"C:\Users\19404\innate-binocular-vision\experiment{}.json".format(experiment_id)
+
     with open(parameters_file, "r") as f:
         experiment_parameters = json.load(f)
     return experiment_parameters
@@ -18,7 +20,7 @@ def run_workload(experiment_parameters):
     started = []
     total = []
     # path = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiments\{}\outputs\json".format(experiment_parameters["experiment_id"])
-    path = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiments1\outputs\json"
+    path = r"C:\Users\19404\innate-binocular-vision"
 
     # List files in the output JSON directory
     started = os.listdir(path)
@@ -58,16 +60,20 @@ def extract_subparameters(experiment_parameters, lgn_parameters):
     "started": None,
     "finished": None,
     "correlation": None,
-    "lgn_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\layers".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "patch_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\patches".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "filter_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\filters".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "activity_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\activity".format(experiment_parameters["experiment_id"],lgn_parameters["name"])
+    # "lgn_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\layers".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    "lgn_dump": "C:\\Users\\19404\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\layers".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    # "patch_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\patches".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    "patch_dump": "CC:\\Users\\19404\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\patches".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    # "filter_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\filters".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    "filter_dump": "C:\\Users\\19404\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\filters".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
+    # "activity_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\activity".format(experiment_parameters["experiment_id"],lgn_parameters["name"])
+    "activity_dump": "C:\\Users\\19404\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\activity".format(experiment_parameters["experiment_id"],lgn_parameters["name"])
     }
     return subparameters
 
 
 def work(experiment_subparameters):
-    print(experiment_subparameters["depthmap_path"])
+    # print(experiment_subparameters["depthmap_path"])
     try:
         results = ibv.local_experiment(experiment_subparameters, 5, 5)
     except ValueError as err:
