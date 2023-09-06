@@ -1,8 +1,8 @@
 {
     "experiment_id": 1,
     "parameter_path": "experiments/1/inputs/parameters",
-    "depthmap_path": "C:/vscode/innate-binocular-vision/innate-binocular-vision/dm.png",
-    "autostereogram_path": "C:/vscode/innate-binocular-vision/innate-binocular-vision/autostereogram.png",
+    "depthmap_path": "C:/Users/19404/innate-binocular-vision/dm.png",
+    "autostereogram_path": "C:/Users/19404/innate-binocular-vision/autostereogram.png",
     "autostereogram_patch": 5,
     "num_filters": 20,
     "num_components": 20,
