@@ -195,17 +195,12 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
         # try:
         patches = generate_patches(
         num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
-<<<<<<< HEAD
     # except ValueError as err:
-=======
-        # except ValueError as err:
->>>>>>> 437961582e8c927e6928e2d9244c7e37598befb6
             # raise err
         filters = perform_ica(num_components, patches[0])
         # print(filters)
         if (filter_count == 0):
             print('check1' )
-<<<<<<< HEAD
             print(filters)
 
             filter_base = np.append(filter_base, filters, axis=0)
@@ -213,11 +208,6 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
             filter_count = filter_base.shape[0]
             print('filter count:' ,filter_count)
 
-=======
-            filter_base = filters
-            filter_count = filter_base.shape[0]
-            print('filter count:' ,filter_count)
->>>>>>> 437961582e8c927e6928e2d9244c7e37598befb6
         else:
             print('check2' )
             filter_base = np.append(filter_base, filters, axis=0)
