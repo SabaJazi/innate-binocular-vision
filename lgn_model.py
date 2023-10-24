@@ -535,12 +535,14 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
     autostereogram = open_norm(autostereogram_path, verbose=False)
     groundtruth = np.array(Image.open(depthmap_path).convert("L"))
 
-    try:
-        res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
-                               experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]['lgn_a'], 
-                               experiment_subparameters["lgn_parameters"]['lgn_r'] ,experiment_subparameters["lgn_parameters"]['lgn_p'], experiment_subparameters["lgn_parameters"]['lgn_t'])
-    except ValueError as err:
-        raise err
+    # try:
+    res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
+                            experiment_subparameters["patch_size"],
+                            experiment_subparameters["lgn_size"],
+                            experiment_subparameters["lgn_parameters"]['lgn_a'], 
+                            experiment_subparameters["lgn_parameters"]['lgn_r'] ,experiment_subparameters["lgn_parameters"]['lgn_p'], experiment_subparameters["lgn_parameters"]['lgn_t'])
+        # except ValueError as err:
+    #     raise err
 
     filters = res[0]
     patches = res[1].reshape(-1, experiment_subparameters["patch_size"], experiment_subparameters["patch_size"])
@@ -559,26 +561,26 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
 
     experiment_subparameters["correlation"] = correlation
     return experiment_subparameters
-# --------------------run------------------------
+# -----------------------------------run-----------------------------------
 
 experiment_subparameters = {
     "depthmap_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\dm.png",
     "autostereogram_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\autostereogram.png",
     # "num_filters": 2000,
-    "num_filters": 200,
+    "num_filters": 20,
     "num_components": 20,
-    "num_patches": 100000,
+    "num_patches": 1000,
     "patch_size": 8,
     "lgn_size": 64,
     # "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]],
-    "lgn_parameters":[
+    "lgn_parameters":
         {
             "lgn_a": 0.5,
             "lgn_r": 2.0,
             "lgn_p": 0.592,
             "lgn_t": 1.0,
             "name": "a0.05_r1.00_p0.592_t1.00"
-        }],
+        },
     "lgn_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
     "filter_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
     "patch_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
@@ -598,4 +600,4 @@ filter_max = 20
 result = local_experiment(experiment_subparameters, patch_max, filter_max)
 
 # Print the result or perform other actions as needed
-# print("Experiment result:", result)
+print("Experiment result:", result)
