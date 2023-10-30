@@ -197,21 +197,23 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
         num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
     # except ValueError as err:
             # raise err
+        #actually bases not filters
         filters = perform_ica(num_components, patches[0])
         # print(filters)
         if (filter_count == 0):
-            print('check1' )
             print(filters)
-
-            filter_base = np.append(filter_base, filters, axis=0)
+            # filter_base = np.append(filter_base,filters, axis=0)
+            filter_base = filters
 
             filter_count = filter_base.shape[0]
             print('filter count:' ,filter_count)
 
         else:
-            print('check2' )
-            filter_base = np.append(filter_base, filters, axis=0)
-            print('filters: ',filter_base.shape )
+            # filter_base = np.append(filter_base, filters, axis=0)
+            filter_base = np.vstack([filter_base,filters])
+            filter_count = filter_base.shape[0]
+            print('filter count:' ,filter_count)
+            print('filters(base) array shape: ',filter_base.shape )
 
 
     return (filter_base[:num_filters], patches[0], patches[1])
@@ -567,7 +569,7 @@ experiment_subparameters = {
     "depthmap_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\dm.png",
     "autostereogram_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\autostereogram.png",
     # "num_filters": 2000,
-    "num_filters": 20,
+    "num_filters": 200,
     "num_components": 20,
     "num_patches": 1000,
     "patch_size": 8,
