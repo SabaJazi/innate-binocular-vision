@@ -119,20 +119,20 @@ class LGN:
 
         self.recruitable = np.random.rand(self.num_layers, w, w) < self.p
            #---- just to visualize---
-        plt.imshow(self.recruitable[0],cmap="gray")
-        plt.title("recruitable nodes layer 1")
-        plt.colorbar()
-        plt.show()
+        # plt.imshow(self.recruitable[0],cmap="gray")
+        # plt.title("recruitable nodes layer 1")
+        # plt.colorbar()
+        # plt.show()
         #-------------------
         self.tot_recruitable = len(np.where(self.recruitable)[0])
         self.tot_recruitable_active = 0
         self.tot_active = 0
         self.active = np.zeros([self.num_layers, w, w], bool)
         #---- just to visualize---
-        plt.imshow(self.active[0],cmap="gray")
-        plt.title("Start LGN activity layer 1")
-        plt.colorbar()
-        plt.show()
+        # plt.imshow(self.active[0],cmap="gray")
+        # plt.title("Start LGN activity layer 1")
+        # plt.colorbar()
+        # plt.show()
         #-------------------
         self.active_neighbors = np.zeros([self.num_layers, w, w], int)
      
@@ -157,24 +157,24 @@ class LGN:
             act_l, act_x, act_y = self.activated.pop()
             self.active[act_l, act_x, act_y] = True
             #---- just to visualize---
-            # plt.imshow(self.active[0],cmap="gray")
-            # plt.title("activated nodes in layer 1")
-            # plt.colorbar()
+            # # plt.imshow(self.active[0],cmap="gray")
+            # # plt.title("activated nodes in layer 1")
+            # # plt.colorbar()
+            # # plt.show()
+            # fig, axes = plt.subplots(1, 2, figsize=(10, 4))  # 1 row, 2 columns
+
+            # # Plot the first image on the first subplot
+            # axes[0].imshow(self.active[0], cmap="gray")
+            # axes[0].set_title("Layer 1")
+            # axes[0].set_axis_off()  # Optional: Turn off axes
+
+            # # Plot the second image on the second subplot
+            # axes[1].imshow(self.active[1], cmap="gray")
+            # axes[1].set_title("Layer 2")
+            # axes[1].set_axis_off()  # Optional: Turn off axes
+
+            # # Show the plot
             # plt.show()
-            fig, axes = plt.subplots(1, 2, figsize=(10, 4))  # 1 row, 2 columns
-
-            # Plot the first image on the first subplot
-            axes[0].imshow(self.active[0], cmap="gray")
-            axes[0].set_title("Layer 1")
-            axes[0].set_axis_off()  # Optional: Turn off axes
-
-            # Plot the second image on the second subplot
-            axes[1].imshow(self.active[1], cmap="gray")
-            axes[1].set_title("Layer 2")
-            axes[1].set_axis_off()  # Optional: Turn off axes
-
-            # Show the plot
-            plt.show()
             #-------------------
             self.tot_active += 1
             self.tot_recruitable_active += 1
@@ -254,10 +254,10 @@ class LGN:
 
             # plt.show()
 
-            plt.imshow(conv)
-            plt.title("Convolved LGN activity layer {}".format(l+1))
+            # plt.imshow(conv)
+            # plt.title("Convolved LGN activity layer {}".format(l+1))
 
-            plt.show()
+            # plt.show()
 
         return img_array
 
@@ -314,15 +314,16 @@ experiment_subparameters = {
     "correlation":r"C:\vscode\innate-binocular-vision\innate-binocular-vision"
    
 }
-# [[0.5 1.5 10], [4 4 1] ,[1 4 8], [0.05 0.05 1]]
-# Set the maximum values for patch and filter 
-# (original path_max=100000, original filter=200)
-patch_max = 10000
-filter_max = 20
+# # [[0.5 1.5 10], [4 4 1] ,[1 4 8], [0.05 0.05 1]]
+# # Set the maximum values for patch and filter 
+# # (original path_max=100000, original filter=200)
+# patch_max = 10000
+# filter_max = 20
 
-# Call the local_experiment function
+# # Call the local_experiment function
 
-result = local_experiment(experiment_subparameters, patch_max, filter_max)
+# result = local_experiment(experiment_subparameters, patch_max, filter_max)
 
-# Print the result or perform other actions as needed
-print("Experiment result:", result)
+# # Print the result or perform other actions as needed
+# print("Experiment result:", result)
+# --------------------------------------test run----------------------
