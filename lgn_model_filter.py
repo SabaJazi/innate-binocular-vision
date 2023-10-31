@@ -22,65 +22,103 @@ def calculate_optimal_p(t, r, a):
     return p
 
 
-# def generate_gabor(size, shift, sigma, rotation, phase_shift, frequency):
-#     radius = (int((size[0]/2.0)), int((size[1]/2.0)))
-#     # a BUG is fixed in this line
-#     [x, y] = np.meshgrid(range(-radius[0], radius[0]),
-#                          range(-radius[1], radius[1]))
-#     x = x - int(shift[0])
-#     y = y - int(shift[1])
-#     x = x * frequency
-#     y = y * frequency
-#     tmp = x * np.cos(rotation) + y * np.sin(rotation) + phase_shift
-#     radius = (int(size[0]/2.0), int(size[1]/2.0))
-#     # a BUG is fixed in this line
-#     [x, y] = np.meshgrid(range(-radius[0], radius[0]),
-#                          range(-radius[1], radius[1]))
+def generate_gabor(size, shift, sigma, rotation, phase_shift, frequency):
+    radius = (int((size[0]/2.0)), int((size[1]/2.0)))
+    # a BUG is fixed in this line
+    [x, y] = np.meshgrid(range(-radius[0], radius[0]),
+                         range(-radius[1], radius[1]))
+    x = x - int(shift[0])
+    y = y - int(shift[1])
+    x = x * frequency
+    y = y * frequency
+    tmp = x * np.cos(rotation) + y * np.sin(rotation) + phase_shift
+    radius = (int(size[0]/2.0), int(size[1]/2.0))
+    # a BUG is fixed in this line
+    [x, y] = np.meshgrid(range(-radius[0], radius[0]),
+                         range(-radius[1], radius[1]))
 
-#     x = x - int(shift[0])
-#     y = y - int(shift[1])
-#     x1 = x * np.cos(rotation) + y * np.sin(rotation)
-#     y1 = -x * np.sin(rotation) + y * np.cos(rotation)
+    x = x - int(shift[0])
+    y = y - int(shift[1])
+    x1 = x * np.cos(rotation) + y * np.sin(rotation)
+    y1 = -x * np.sin(rotation) + y * np.cos(rotation)
 
-#     sinusoid = np.cos(tmp)
+    sinusoid = np.cos(tmp)
 
-#     gauss = np.e * \
-#         np.exp(np.negative(
-#             0.5 * ((x1**2 / sigma[0]**2) + (y1**2 / sigma[1]**2))))
-#     gauss = gauss / 2*np.pi * sigma[0] * sigma[1]
+    gauss = np.e * \
+        np.exp(np.negative(
+            0.5 * ((x1**2 / sigma[0]**2) + (y1**2 / sigma[1]**2))))
+    gauss = gauss / 2*np.pi * sigma[0] * sigma[1]
 
-#     gabor = gauss * sinusoid
-#     return gabor
-
-
-# def linear_convolution(center, slide):
-#     if (center.shape != slide.shape):
-#         return
-#     padded_slide = np.zeros((center.shape[0], center.shape[1]*3))
-#     padded_slide[0:, center.shape[1]:center.shape[1]*2] = center
-#     # plt.imshow(padded_slide,origin="lower")
-#     # plt.show()
-#     estimate = np.zeros([center.shape[1]*2])
-#     for x in range(center.shape[1]*2):
-#         dot = np.sum(padded_slide[0:, 0+x:center.shape[1]+x] * slide)
-#         estimate[x] = dot
-#     # plt.plot(estimate)
-#     # plt.show()
-#     return np.abs(estimate)
+    gabor = gauss * sinusoid
+    return gabor
 
 
+def open_norm(path, verbose=False):
+    raw = np.array(Image.open(path).convert("L"))
+    norm = (raw - np.mean(raw)) / np.std(raw)
+
+    if verbose:
+        return raw, norm
+    else:
+        return norm
 
 
-# def scale_disparity(activity_map, disparity_map):
-#     scaled_disparity = np.zeros(
-#         [activity_map.shape[0], activity_map.shape[1], disparity_map.shape[0]])
-#     scaled_disparity[:, :] = disparity_map
-#     for x in range(activity_map.shape[0]):
-#         for y in range(activity_map.shape[1]):
-#             scaled_disparity[x, y] = activity_map[x, y] * \
-#                 scaled_disparity[x, y]
+def linear_convolution(center, slide):
+    if (center.shape != slide.shape):
+        return
+    padded_slide = np.zeros((center.shape[0], center.shape[1]*3))
+    padded_slide[0:, center.shape[1]:center.shape[1]*2] = center
+    # plt.imshow(padded_slide,origin="lower")
+    # plt.show()
+    estimate = np.zeros([center.shape[1]*2])
+    for x in range(center.shape[1]*2):
+        dot = np.sum(padded_slide[0:, 0+x:center.shape[1]+x] * slide)
+        estimate[x] = dot
+    # plt.plot(estimate)
+    # plt.show()
+    return np.abs(estimate)
 
-#     return scaled_disparity
+
+def double_convolve(normal, shifted, image, pupillary_distance):
+
+    # CHECKOUT https://github.com/maweigert/gputools
+    # probably VERY advantageous to switch over to GPU for convolutions!
+
+    normal_convolved = signal.convolve2d(
+        image, normal, boundary='symm', mode='same')
+    shifted_convolved = signal.convolve2d(
+        image, shifted, boundary='symm', mode='same')
+
+    return_shape = image.shape
+
+    realigned = np.zeros(return_shape)
+
+    normal_convolved = normal_convolved[0:, 0:-pupillary_distance]
+    shifted_convolved = shifted_convolved[0:, pupillary_distance:]
+
+    mul = normal_convolved * shifted_convolved
+    # plt.imshow(mul,cmap="nipy_spectral")
+    # plt.show()
+
+    # REMOVE BELOW COMMENTS TO THRESH SUBHALF VALUES
+    low_values_flags = mul < 0  # mul.max()*0.5  # Where values are low
+    mul[low_values_flags] = 0  # All low values set to 0
+    realigned[0:, pupillary_distance:] = mul
+    return np.abs(mul)
+
+
+def scale_disparity(activity_map, disparity_map):
+    scaled_disparity = np.zeros(
+        [activity_map.shape[0], activity_map.shape[1], disparity_map.shape[0]])
+    scaled_disparity[:, :] = disparity_map
+    for x in range(activity_map.shape[0]):
+        for y in range(activity_map.shape[1]):
+            scaled_disparity[x, y] = activity_map[x, y] * \
+                scaled_disparity[x, y]
+
+    return scaled_disparity
+
+
 
 # In[4]:
 
@@ -131,6 +169,19 @@ def generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lg
     return (patch_base[:num_patches], layer_activity)
 
 
+# In[5]:
+
+def perform_ica(num_components, patches):
+
+    print(Fore.GREEN + 'perform_ica:')
+    print(Style.RESET_ALL)
+    # Run ICA on all the patches and return generated components
+    # note, sensitive to n_components
+    ica_instance = FastICA(n_components=num_components,
+                           random_state=1, max_iter=1000000, whiten='standard')
+    icafit = ica_instance.fit(patches)
+    ica_components = icafit.components_
+    return ica_components
 
 
 # In[6]:
@@ -145,21 +196,100 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
         # try:
         patches = generate_patches(
         num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
+    # except ValueError as err:
+            # raise err
+        #actually bases not filters
+        filters = perform_ica(num_components, patches[0])
+        #lets plot bases
+  
+        plt.imshow(np.transpose(filters), cmap='gray', aspect='auto')
+        plt.colorbar() 
+        plt.show()
+        # print(filters)
+
+        if (filter_count == 0):
+            print(filters)
+            # filter_base = np.append(filter_base,filters, axis=0)
+            filter_base = filters
+
+            filter_count = filter_base.shape[0]
+            print('filter count:' ,filter_count)
+
+        else:
+            # filter_base = np.append(filter_base, filters, axis=0)
+            filter_base = np.vstack([filter_base,filters])
+            filter_count = filter_base.shape[0]
+            print('filter count:' ,filter_count)
+            print('filters(base) array shape: ',filter_base.shape )
+
 
     return (filter_base[:num_filters], patches[0], patches[1])
 
 
+# In[7]:
+
+def unpack_filters(filters):
+    print(Fore.RED + 'Unpacking filters:')
+    print(Style.RESET_ALL)
+
+    half_filter = int(filters.shape[1]/2)
+    filter_dim = int(np.sqrt(filters.shape[1]/2))
+    first_eye = filters[:, 0:half_filter].reshape(-1, filter_dim, filter_dim)
+    second_eye = filters[:, half_filter:].reshape(-1, filter_dim, filter_dim)
+    return (first_eye, second_eye)
+
+
+# In[8]:
+
+def linear_disparity(first_eye, second_eye):
+    print(Fore.RED + 'linear_disparity:')
+    print(Style.RESET_ALL)
+
+    disparity_map = np.empty([first_eye.shape[0], first_eye.shape[1]*2])
+    for index in range(first_eye.shape[0]):
+        disparity = linear_convolution(first_eye[index], second_eye[index])
+        disparity_map[index] = disparity
+    return disparity_map
+
+
+# In[9]:
+
+def normalize_disparity(disparity_map):
+    with np.errstate(divide='ignore', invalid='ignore'):
+        #normalize_disparity = (disparity_map - np.mean(disparity_map, axis=0)) / np.std(disparity_map)
+        normalized_disparity = (disparity_map / np.mean(disparity_map, axis=0))
+
+        #sum_normalized_disparity = np.sum(normalized_disparity, axis=0)
+        #double_normalized_disparity = normalized_disparity / sum_normalized_disparity
+    return normalized_disparity
+
+
+# In[10]:
+
+def generate_activity(autostereogram, asg_patch_size, first_eye, second_eye, disparity_map):
+    for index in range(first_eye.shape[0]):
+        # make this more elegant
+        convolution = double_convolve(
+            first_eye[index], second_eye[index], autostereogram, asg_patch_size)
+        scaled_activity = scale_disparity(convolution, disparity_map[index])
+        if index == 0:
+            summed_activity = scaled_activity
+        else:
+            summed_activity = summed_activity + scaled_activity
+    return summed_activity
+
+
 # In[11]:
 
-# def estimate_depth(activity):
-#     depth_estimate = np.zeros([activity.shape[0], activity.shape[1]])
-#     for x in range(activity.shape[0]):
-#         for y in range(activity.shape[1]):
-#             peak = int(
-#                 np.abs(np.nanargmax(activity[x, y])-int(activity.shape[2]/2)))
-#             #peak = np.nanargmax(activity[x,y])
-#             depth_estimate[x, y] = peak
-#     return depth_estimate
+def estimate_depth(activity):
+    depth_estimate = np.zeros([activity.shape[0], activity.shape[1]])
+    for x in range(activity.shape[0]):
+        for y in range(activity.shape[1]):
+            peak = int(
+                np.abs(np.nanargmax(activity[x, y])-int(activity.shape[2]/2)))
+            #peak = np.nanargmax(activity[x,y])
+            depth_estimate[x, y] = peak
+    return depth_estimate
 
 
 # In[12]:
@@ -169,6 +299,77 @@ def save_array(input_array, path):
                   (input_array - input_array.min())).astype(np.uint8)
     save_image = Image.fromarray(cast_array)
     save_image.save(path)
+
+
+
+# In[14]:
+
+# In[15]:
+
+def disparity_distribution(disparity_map):
+    print(Fore.RED + 'disparity_distribution:')
+    print(Style.RESET_ALL)
+
+    dist = np.empty([disparity_map.shape[0]])
+    for x in range(disparity_map.shape[0]):
+        peak = np.abs(np.nanargmax(
+            disparity_map[x])-int(disparity_map.shape[1]/2))
+        dist[x] = int(peak)
+    return dist
+
+
+# In[16]:
+
+def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a, autostereogram, asg_patch_size, groundtruth, experiment_folder):
+    print(Fore.RED + 'run_experiment:')
+    print(Style.RESET_ALL)
+    autostereogram = open_norm(autostereogram,verbose=False)
+    groundtruth = np.array(Image.open(groundtruth).convert("L"))
+
+    filters = generate_filters(num_filters, num_components, num_patches,
+                               patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
+    split_filters = unpack_filters(filters)
+    disparity_map = linear_disparity(split_filters[0], split_filters[1])
+
+    plt.hist(disparity_distribution(disparity_map))
+    plt.title('disparity histogram')
+    plt.show()
+
+    #normalized_disparity = disparity_map
+
+    normalized_disparity = normalize_disparity(disparity_map)
+    plt.hist(disparity_distribution(normalized_disparity))
+    plt.title('normalized disparity histogram')
+
+    plt.show()
+
+    activity = generate_activity(autostereogram, asg_patch_size,
+                                 split_filters[0], split_filters[1], normalized_disparity)
+    depth_estimate = estimate_depth(activity)
+    correlation = np.corrcoef(depth_estimate.flatten(),
+                              groundtruth.flatten())[0, 1]
+    current_time = time.localtime()
+  
+    save_array(depth_estimate, "im.png")
+
+    params = {
+        "num_filters": num_filters,
+        "num_components": num_components,
+        "num_patches": num_patches,
+        "patch_size": patch_size,
+        "lgn_width": lgn_width,
+        "lgn_p": lgn_p,
+        "lgn_r": lgn_r,
+        "lgn_t": lgn_t,
+        "lgn_a": lgn_a,
+        "corr": np.abs(correlation),
+        "time": time.strftime('%a, %d %b %Y %H:%M:%S GMT', current_time),
+        "id": 1 #ident_hash
+    }
+
+
+    return params
+
 
 
 def distance(x0, y0, x1, y1):
@@ -333,18 +534,41 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
     print(Fore.BLUE + 'local_experiment:')
     print(Style.RESET_ALL)
 
+    current_dir = os.getcwd()
+    depthmap_path =  experiment_subparameters["depthmap_path"]
+    # depthmap_path = os.path.join(current_dir, experiment_subparameters["depthmap_path"])
+
+    autostereogram_path = experiment_subparameters["autostereogram_path"]
+    # autostereogram_path = os.path.join(current_dir,experiment_subparameters["autostereogram_path"])
+
+    autostereogram = open_norm(autostereogram_path, verbose=False)
+    groundtruth = np.array(Image.open(depthmap_path).convert("L"))
+
+    # try:
     res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
                             experiment_subparameters["patch_size"],
                             experiment_subparameters["lgn_size"],
                             experiment_subparameters["lgn_parameters"]['lgn_a'], 
                             experiment_subparameters["lgn_parameters"]['lgn_r'] ,experiment_subparameters["lgn_parameters"]['lgn_p'], experiment_subparameters["lgn_parameters"]['lgn_t'])
- 
+        # except ValueError as err:
+    #     raise err
+
     filters = res[0]
     patches = res[1].reshape(-1, experiment_subparameters["patch_size"], experiment_subparameters["patch_size"])
     lgn = res[2]
 
+    split_filters = unpack_filters(filters)
 
 
+    disparity_map = linear_disparity(split_filters[0], split_filters[1])
+    normalized_disparity = normalize_disparity(disparity_map)
+    activity = generate_activity(autostereogram, experiment_subparameters["autostereogram_patch"], split_filters[0], split_filters[1], normalized_disparity)
+    depth_estimate = estimate_depth(activity)
+
+
+    correlation = np.corrcoef(depth_estimate.flatten(), groundtruth.flatten())[0, 1]
+
+    experiment_subparameters["correlation"] = correlation
     return experiment_subparameters
 # -----------------------------------run-----------------------------------
 
