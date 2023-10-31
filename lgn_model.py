@@ -21,69 +21,6 @@ def calculate_optimal_p(t, r, a):
     p = t / (((np.pi * (r**2)/2))*(1+a))
     return p
 
-
-# def generate_gabor(size, shift, sigma, rotation, phase_shift, frequency):
-#     radius = (int((size[0]/2.0)), int((size[1]/2.0)))
-#     # a BUG is fixed in this line
-#     [x, y] = np.meshgrid(range(-radius[0], radius[0]),
-#                          range(-radius[1], radius[1]))
-#     x = x - int(shift[0])
-#     y = y - int(shift[1])
-#     x = x * frequency
-#     y = y * frequency
-#     tmp = x * np.cos(rotation) + y * np.sin(rotation) + phase_shift
-#     radius = (int(size[0]/2.0), int(size[1]/2.0))
-#     # a BUG is fixed in this line
-#     [x, y] = np.meshgrid(range(-radius[0], radius[0]),
-#                          range(-radius[1], radius[1]))
-
-#     x = x - int(shift[0])
-#     y = y - int(shift[1])
-#     x1 = x * np.cos(rotation) + y * np.sin(rotation)
-#     y1 = -x * np.sin(rotation) + y * np.cos(rotation)
-
-#     sinusoid = np.cos(tmp)
-
-#     gauss = np.e * \
-#         np.exp(np.negative(
-#             0.5 * ((x1**2 / sigma[0]**2) + (y1**2 / sigma[1]**2))))
-#     gauss = gauss / 2*np.pi * sigma[0] * sigma[1]
-
-#     gabor = gauss * sinusoid
-#     return gabor
-
-
-# def linear_convolution(center, slide):
-#     if (center.shape != slide.shape):
-#         return
-#     padded_slide = np.zeros((center.shape[0], center.shape[1]*3))
-#     padded_slide[0:, center.shape[1]:center.shape[1]*2] = center
-#     # plt.imshow(padded_slide,origin="lower")
-#     # plt.show()
-#     estimate = np.zeros([center.shape[1]*2])
-#     for x in range(center.shape[1]*2):
-#         dot = np.sum(padded_slide[0:, 0+x:center.shape[1]+x] * slide)
-#         estimate[x] = dot
-#     # plt.plot(estimate)
-#     # plt.show()
-#     return np.abs(estimate)
-
-
-
-
-# def scale_disparity(activity_map, disparity_map):
-#     scaled_disparity = np.zeros(
-#         [activity_map.shape[0], activity_map.shape[1], disparity_map.shape[0]])
-#     scaled_disparity[:, :] = disparity_map
-#     for x in range(activity_map.shape[0]):
-#         for y in range(activity_map.shape[1]):
-#             scaled_disparity[x, y] = activity_map[x, y] * \
-#                 scaled_disparity[x, y]
-
-#     return scaled_disparity
-
-# In[4]:
-
 def generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a):
     #here we creat LGN patern patches
     print(Fore.GREEN + 'generate_patches:')
@@ -132,9 +69,6 @@ def generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lg
 
 
 
-
-# In[6]:
-
 def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a):
     print(Fore.RED + 'generate_filters:')
     print(Style.RESET_ALL)
@@ -148,21 +82,6 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
 
     return (filter_base[:num_filters], patches[0], patches[1])
 
-
-# In[11]:
-
-# def estimate_depth(activity):
-#     depth_estimate = np.zeros([activity.shape[0], activity.shape[1]])
-#     for x in range(activity.shape[0]):
-#         for y in range(activity.shape[1]):
-#             peak = int(
-#                 np.abs(np.nanargmax(activity[x, y])-int(activity.shape[2]/2)))
-#             #peak = np.nanargmax(activity[x,y])
-#             depth_estimate[x, y] = peak
-#     return depth_estimate
-
-
-# In[12]:
 
 def save_array(input_array, path):
     cast_array = (255.0 / input_array.max() *
