@@ -116,12 +116,26 @@ class LGN:
         # setting up the network
         w = self.width
         self.allcells = (self.num_layers * w * w)
+
         self.recruitable = np.random.rand(self.num_layers, w, w) < self.p
+           #---- just to visualize---
+        plt.imshow(self.recruitable[0],cmap="gray")
+        plt.title("recruitable nodes layer 1")
+        plt.colorbar()
+        plt.show()
+        #-------------------
         self.tot_recruitable = len(np.where(self.recruitable)[0])
         self.tot_recruitable_active = 0
         self.tot_active = 0
         self.active = np.zeros([self.num_layers, w, w], bool)
+        #---- just to visualize---
+        plt.imshow(self.active[0],cmap="gray")
+        plt.title("Start LGN activity layer 1")
+        plt.colorbar()
+        plt.show()
+        #-------------------
         self.active_neighbors = np.zeros([self.num_layers, w, w], int)
+     
         self.activated = []  # the recently active nodes
 
         if self.tot_recruitable > 0:
@@ -142,6 +156,12 @@ class LGN:
         while len(self.activated) > 0:
             act_l, act_x, act_y = self.activated.pop()
             self.active[act_l, act_x, act_y] = True
+            #---- just to visualize---
+            plt.imshow(self.active[0],cmap="gray")
+            plt.title("actived nodes in layer 1")
+            plt.colorbar()
+            plt.show()
+            #-------------------
             self.tot_active += 1
             self.tot_recruitable_active += 1
             for l in range(self.num_layers):
@@ -278,11 +298,18 @@ experiment_subparameters = {
     "lgn_size": 64,
     # "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]],
     "lgn_parameters":
+        # {
+        #     "lgn_a": 0.5,
+        #     "lgn_r": 2.0,
+        #     "lgn_p": 0.592,
+        #     "lgn_t": 1.0,
+        #     "name": "a0.05_r1.00_p0.592_t1.00"
+        # },
         {
             "lgn_a": 0.5,
-            "lgn_r": 2.0,
-            "lgn_p": 0.592,
-            "lgn_t": 1.0,
+            "lgn_r": 3.0,
+            "lgn_p": 0.83,
+            "lgn_t": 10.0,
             "name": "a0.05_r1.00_p0.592_t1.00"
         },
     "lgn_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
