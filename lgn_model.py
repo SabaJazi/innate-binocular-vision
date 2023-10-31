@@ -157,9 +157,23 @@ class LGN:
             act_l, act_x, act_y = self.activated.pop()
             self.active[act_l, act_x, act_y] = True
             #---- just to visualize---
-            plt.imshow(self.active[0],cmap="gray")
-            plt.title("actived nodes in layer 1")
-            plt.colorbar()
+            # plt.imshow(self.active[0],cmap="gray")
+            # plt.title("activated nodes in layer 1")
+            # plt.colorbar()
+            # plt.show()
+            fig, axes = plt.subplots(1, 2, figsize=(10, 4))  # 1 row, 2 columns
+
+            # Plot the first image on the first subplot
+            axes[0].imshow(self.active[0], cmap="gray")
+            axes[0].set_title("Layer 1")
+            axes[0].set_axis_off()  # Optional: Turn off axes
+
+            # Plot the second image on the second subplot
+            axes[1].imshow(self.active[1], cmap="gray")
+            axes[1].set_title("Layer 2")
+            axes[1].set_axis_off()  # Optional: Turn off axes
+
+            # Show the plot
             plt.show()
             #-------------------
             self.tot_active += 1
@@ -181,7 +195,6 @@ class LGN:
                                 else:  # activate the node but don't propagate the activity
                                     self.active[l, xi, yi] = True
                                     self.tot_active += 1
-
     def activate(self):
         """ activate a random potentially active node """
         if self.fraction_active() > 0.95:
@@ -195,29 +208,10 @@ class LGN:
             if (self.recruitable[l, x, y] and not self.active[l, x, y]):
                 break
         self.activated.append([l, x, y])
+      
         self.propagate()
+        
 
-    def correlation(self):
-        """ returns the correlation between the left and right images """
-        # the total number of activations in common
-        # same_count = len(where(self.active[0,:,:] == self.active[1,:,:])[0])
-        # return float(same_count) / (self.width * self.width)
-
-        # create an activity matrix of 0's and 1's (instead of True and False)
-        if self.num_layers < 2:
-            print("monocular models cannot have correlations between eye layers")
-            return 0
-        w = self.width
-        active01 = np.zeros([2, w, w], int)
-        active01[np.where(self.active)] = 1
-
-        mean0 = active01[0, :, :].mean()
-        mean1 = active01[1, :, :].mean()
-        std0 = active01[0, :, :].std()
-        std1 = active01[1, :, :].std()
-        cov = ((active01[0, :, :] - mean0) *
-               (active01[1, :, :] - mean1)).mean()
-        return cov / (std0 * std1)
 
     def make_img_mat(self,p_c, show_img=True):
         # print(Fore.RED + 'make_img_mat:')
@@ -308,8 +302,8 @@ experiment_subparameters = {
         {
             "lgn_a": 0.5,
             "lgn_r": 3.0,
-            "lgn_p": 0.83,
-            "lgn_t": 10.0,
+            "lgn_p": 0.48,
+            "lgn_t": 5.0,
             "name": "a0.05_r1.00_p0.592_t1.00"
         },
     "lgn_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
