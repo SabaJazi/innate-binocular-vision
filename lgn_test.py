@@ -165,60 +165,60 @@ class LGN:
 # activity_differences = np.abs(generated_activity[0]-generated_activity[1])
 # # print(activity_differences)
 # ----------------------------------------
-# p_lin = np.linspace(0.0,0.5,5)
-# for a in p_lin:
-#     L = LGN(width=256, p=0.15, r=4, t=5, trans=a,
-#             make_wave=True, num_layers=2)
-
-#     generated_activity = L.make_img_mat()
-#     activity_differences = np.abs(generated_activity[0]-generated_activity[1])
-#     differences = np.abs(generated_activity[0]-generated_activity[1])
-#     fig, (layer_1, layer_2, diff) = plt.subplots(1, 3, sharex=True)
-    
-#     layer_1.axis("off")
-#     layer_2.axis("off")
-#     diff.axis("off")
-
-#     layer_1.imshow(generated_activity[0], cmap="Greys_r")
-#     layer_2.imshow(generated_activity[1], cmap="Greys_r")
-#     diff.imshow(activity_differences, cmap="Reds_r")
-    
-#     filename = "p_0.15-r_4.0-t_5.0_a_{}.png".format(a)
-
-#     plt.savefig(filename,dpi=300)
-
-#     plt.show()
-# ------------------------------------------
 p_lin = np.linspace(0.0,0.5,5)
-t_lin = np.linspace(3,8,6)
-print('p line' , p_lin)
-print('t line', t_lin)
-fig, subs = plt.subplots(6, 6, sharex=True)
-for idx_p, p in enumerate(p_lin):
-    for idx_t, t in enumerate(t_lin):
-        print('p = ',p,'t = ',t)
-        L =LGN(width=256, p=p, r=4, t=t, trans=0.5,
-                make_wave=True, num_layers=2)
+for a in p_lin:
+    L = LGN(width=256, p=0.15, r=4, t=5, trans=a,
+            make_wave=True, num_layers=2)
 
-        try:
-            generated_activity = L.make_img_mat()
-        except ValueError as err:
-            if (str(err) == "LGN: activity greater than high bound"):
-                generated_activity =  np.full((2,256, 256), 1.0)
-                generated_activity[0][0][0] = 0
+    generated_activity = L.make_img_mat()
+    activity_differences = np.abs(generated_activity[0]-generated_activity[1])
+    differences = np.abs(generated_activity[0]-generated_activity[1])
+    fig, (layer_1, layer_2, diff) = plt.subplots(1, 3, sharex=True)
+    
+    layer_1.axis("off")
+    layer_2.axis("off")
+    diff.axis("off")
+
+    layer_1.imshow(generated_activity[0], cmap="Greys_r")
+    layer_2.imshow(generated_activity[1], cmap="Greys_r")
+    diff.imshow(activity_differences, cmap="Reds_r")
+    
+    filename = "p_0.15-r_4.0-t_5.0_a_{}.png".format(a)
+
+    plt.savefig(filename,dpi=300)
+
+    plt.show()
+# ------------------------------------------
+# p_lin = np.linspace(0.0,0.5,5)
+# t_lin = np.linspace(3,8,6)
+# print('p line' , p_lin)
+# print('t line', t_lin)
+# fig, subs = plt.subplots(6, 6, sharex=True)
+# for idx_p, p in enumerate(p_lin):
+#     for idx_t, t in enumerate(t_lin):
+#         print('p = ',p,'t = ',t)
+#         L =LGN(width=256, p=p, r=4, t=t, trans=0.5,
+#                 make_wave=True, num_layers=2)
+
+#         try:
+#             generated_activity = L.make_img_mat()
+#         except ValueError as err:
+#             if (str(err) == "LGN: activity greater than high bound"):
+#                 generated_activity =  np.full((2,256, 256), 1.0)
+#                 generated_activity[0][0][0] = 0
 
 
-            else:
-                generated_activity =  np.full((2,256, 256), 0.0)
-                generated_activity[0][0][0] = 1
+#             else:
+#                 generated_activity =  np.full((2,256, 256), 0.0)
+#                 generated_activity[0][0][0] = 1
 
 
-        subs[idx_p][idx_t].axis("off")
-        subs[idx_p][idx_t].set_aspect(aspect=100)
+#         subs[idx_p][idx_t].axis("off")
+#         subs[idx_p][idx_t].set_aspect(aspect=100)
 
-        generated_activity = generated_activity[:,:,:-5]
-        subs[idx_p][idx_t].imshow(generated_activity[0], cmap="winter")
+#         generated_activity = generated_activity[:,:,:-5]
+#         subs[idx_p][idx_t].imshow(generated_activity[0], cmap="winter")
 
 
-filename = "lgn_pt_variance.png"
-plt.savefig(filename,dpi=300)
+# filename = "lgn_pt_variance.png"
+# plt.savefig(filename,dpi=300)
