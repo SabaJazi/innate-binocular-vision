@@ -453,15 +453,20 @@ from datetime import date
 # Returns the current local date
 today = date.today()
 print("Today date is: ", today)
-
+# ------------------------------------------------
 from pathlib import Path
+import os
+
 # parent_path="/content"
-main_path="/content/drive/MyDrive/lab/LGN-IBV/results/"
+# main_path="/content/drive/MyDrive/lab/LGN-IBV/results/"
 
-Path(main_path+str(today)).mkdir(parents=True, exist_ok=True)
-parent_path="/content/drive/MyDrive/lab/LGN-IBV/results/"+str(today)
+main_path = os.getcwd()
 
-auto = open_norm(main_path+"shift5_70patch.png",verbose=False)
+Path(main_path+"/"+str(today)).mkdir(parents=True, exist_ok=True)
+# parent_path="/content/drive/MyDrive/lab/LGN-IBV/results/"+str(today)
+parent_path=main_path+"/"+str(today)
+
+auto = open_norm(main_path+"/shift5_70patch.png",verbose=False)
 gt = np.array(Image.open(main_path+"/dm.png").convert("L"))
 
 #
@@ -476,10 +481,10 @@ Path(parent_path+"/json").mkdir(parents=True, exist_ok=True)
 Path(parent_path+"/images/depthmaps").mkdir(parents=True, exist_ok=True)
 
 
-r = 2
+r = 3
 pshift = 0.01
 a=0.1
-t=2
+t=8
 
 p = calculate_optimal_p(t,r,a) + pshift
 
