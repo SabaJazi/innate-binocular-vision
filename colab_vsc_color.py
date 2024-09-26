@@ -42,14 +42,30 @@ class LGN:
         """ create another random wave """
         # setting up the network
         w = self.width
-        self.allcells = (self.num_layers * w * w)
-        self.recruitable = np.random.rand(self.num_layers, w, w) < self.p
-        self.tot_recruitable = len(np.where(self.recruitable)[0])
+        channels = 3
+        value_range = 255
+
+        self.allcells = (self.num_layers * w * w * channels)
+        self.recruitable = (np.random.rand(self.num_layers, channels, w, w) < self.p) * np.random.randint(0, value_range + 1, (self.num_layers, channels, w, w))
+
+        self.active = np.zeros([self.num_layers, channels, w, w], dtype=int)
+
+        # Active neighbors will now track an integer count instead of boolean states
+        self.active_neighbors = np.zeros([self.num_layers, channels, w, w], dtype=int)
+        self.activated = []  # the recently active nodes
+        
+        # recruitable cells above a certain threshold, set a cutoff condition
+        self.tot_recruitable = np.count_nonzero(self.recruitable )  
         self.tot_recruitable_active = 0
         self.tot_active = 0
-        self.active = np.zeros([self.num_layers, w, w], bool)
-        self.active_neighbors = np.zeros([self.num_layers, w, w], int)
-        self.activated = []  # the recently active nodes
+
+        # self.tot_recruitable = len(np.where(self.recruitable)[0])
+        # self.tot_recruitable_active = 0
+        # self.tot_active = 0
+        # # Creating arrays for 3 channels
+        # self.active = np.zeros([self.num_layers, channels, w, w], bool)
+        # self.active_neighbors = np.zeros([self.num_layers,channels, w, w], int)
+        # self.activated = []  # the recently active nodes
 
         if self.tot_recruitable > 0:
             # changed active threshold from 20% to 1%
@@ -57,79 +73,105 @@ class LGN:
                 self.activate()
 
     def fraction_active(self):
-        """ returns the fraction of potentially recruitable cells which are active """
+        """ returns the fraction of potentially recruitable cells which are active across all channels """
         if self.tot_recruitable > 0:
+            # Calculate the total number of active cells across all channels
+            self.tot_recruitable_active = np.count_nonzero(self.active)
+            
+            # Return the fraction of active recruitable cells
             return float(self.tot_recruitable_active) / self.tot_recruitable
         else:
             return float('NaN')
 
     def propagate(self):
-        """ propagate the activity if a valid node has been activated """
-        # activated only has recruitable and currently inactive members
+    # propagate the activity if a valid node has been activated across all channels 
+    #activated only has recruitable and currently inactive members
         while len(self.activated) > 0:
-            act_l, act_x, act_y = self.activated.pop()
-            self.active[act_l, act_x, act_y] = True
+            act_l, act_c, act_x, act_y = self.activated.pop()  # act_c for channel (RGB)
+            self.active[act_l, act_c, act_x, act_y] = True
             self.tot_active += 1
             self.tot_recruitable_active += 1
+            
             for l in range(self.num_layers):
-                for x in range(int(act_x-self.r), int(act_x+self.r+1)):
-                    for y in range(int(act_y-self.r), int(act_y+self.r+1)):
+                for x in range(int(act_x - self.r), int(act_x + self.r + 1)):
+                    for y in range(int(act_y - self.r), int(act_y + self.r + 1)):
                         if distance(act_x, act_y, x, y) <= self.r:
                             xi = x % self.width
                             yi = y % self.width
-                            if l != act_l:  # spread the activity across layers
-                                if np.random.rand() < self.trans:  # transfer the activity
-                                    self.active_neighbors[l, xi, yi] += 1
-                            else:  # if it is the same layer
-                                self.active_neighbors[l, xi, yi] += 1
-                            if self.active_neighbors[l, xi, yi] == self.t and not self.active[l, xi, yi]:
-                                if self.recruitable[l, xi, yi]:
-                                    self.activated.append([l, xi, yi])
-                                else:  # activate the node but don't propagate the activity
-                                    self.active[l, xi, yi] = True
-                                    self.tot_active += 1
-
+                            
+                            # Propagate activity across channels and layers
+                            for c in range(3):  # For each channel (RGB)
+                                if l != act_l:  # spread the activity across layers
+                                    if np.random.rand() < self.trans:  # transfer the activity
+                                        self.active_neighbors[l, c, xi, yi] += 1
+                                else:  # if it is the same layer
+                                    self.active_neighbors[l, c, xi, yi] += 1
+                                
+                                # Activate cells when they meet the threshold
+                                if self.active_neighbors[l, c, xi, yi] == self.t and not self.active[l, c, xi, yi]:
+                                    if self.recruitable[l, c, xi, yi]:  # Check if recruitable in this channel
+                                        self.activated.append([l, c, xi, yi])
+                                    else:  # activate the node but don't propagate the activity
+                                        self.active[l, c, xi, yi] = True
+                                        self.tot_active += 1
     def activate(self):
-        """ activate a random potentially active node """
+        """ activate a random potentially active node across all channels """
         if self.fraction_active() > 0.95:
             return
 
         # pick a random point
         while True:
             l = np.random.randint(0, self.num_layers)
+            c = np.random.randint(0, 3)  # Randomly select a channel (R, G, B)
             x = np.random.randint(0, self.width)
-            y = np. random.randint(0, self.width)
-            if (self.recruitable[l, x, y] and not self.active[l, x, y]):
+            y = np.random.randint(0, self.width)
+            
+            # Check if the node is recruitable and inactive in the selected channel
+            if self.recruitable[l, c, x, y] and not self.active[l, c, x, y]:
                 break
-        self.activated.append([l, x, y])
+
+        self.activated.append([l, c, x, y])  # Include the channel in the activated list
         self.propagate()
 
     def correlation(self):
-        """ returns the correlation between the left and right images """
-        # the total number of activations in common
-        # same_count = len(where(self.active[0,:,:] == self.active[1,:,:])[0])
-        # return float(same_count) / (self.width * self.width)
-
-        # create an activity matrix of 0's and 1's (instead of True and False)
+        """ returns the correlation between the left and right images across all channels """
+        # Ensure there are at least two layers for correlation
         if self.num_layers < 2:
-            print("monocular models cannot have correlations between eye layers")
+            print("Monocular models cannot have correlations between eye layers.")
             return 0
-        w = self.width
-        active01 = np.zeros([2, w, w], int)
-        active01[np.where(self.active)] = 1
 
-        mean0 = active01[0, :, :].mean()
-        mean1 = active01[1, :, :].mean()
-        std0 = active01[0, :, :].std()
-        std1 = active01[1, :, :].std()
-        cov = ((active01[0, :, :] - mean0) *
-               (active01[1, :, :] - mean1)).mean()
+        w = self.width
+        # Create an activity matrix of 0's and 1's for each channel
+        active_channels = np.zeros([self.num_layers, w, w], int)
+
+        # Fill active_channels based on the active state
+        for c in range(3):  # For each channel (RGB)
+            active_channels[:, :, :] += (self.active[:, c, :, :] > 0).astype(int)
+
+        # Calculate means and standard deviations for each layer
+        mean0 = active_channels[0, :, :].mean()
+        mean1 = active_channels[1, :, :].mean()
+        std0 = active_channels[0, :, :].std()
+        std1 = active_channels[1, :, :].std()
+
+        # Calculate covariance
+        cov = ((active_channels[0, :, :] - mean0) * (active_channels[1, :, :] - mean1)).mean()
+
+        # Return correlation
+        if std0 == 0 or std1 == 0:
+            print("Standard deviation is zero; correlation cannot be calculated.")
+            return 0
+
         return cov / (std0 * std1)
 
     def make_img_mat(self, show_img=True):
-        """ return a matrix of 1's and 0's showing the activity in both layers """
-        percentage_active = float(self.active.sum()) / self.allcells
-        print('\npercent active: ', percentage_active)
+        """ return a matrix of 1's and 0's showing the activity in all layers and channels """
+        
+        # Count active cells only when all 3 channels are active
+        active_cells = np.sum(np.all(self.active > 0, axis=1))  # Counts only if all channels are active
+        percentage_active = float(active_cells) / self.allcells
+        print('\nPercent active: ', percentage_active)
+
         if percentage_active < 0.05:
             print('LGN: activity less than low bound\n')
             raise ValueError('LGN: activity less than low bound')
@@ -137,38 +179,50 @@ class LGN:
             print('LGN: activity greater than high bound\n')
             raise ValueError('LGN: activity greater than high bound')
 
-
-        img_array = np.zeros([self.num_layers, self.width, self.width])
+        img_array = np.zeros([self.num_layers, 3, self.width, self.width])  # For 3 channels
         w = self.width
 
         for l in range(self.num_layers):
-            img = np.zeros([w, w], float)
-            conv = 0
-            for x in range(0, w-1):
-                for y in range(0, w-1):
-                    if self.active[l, x, y]:
-                        img[x, y] = 1
-                        normal = np.array([[1,1,1],[1,0,1],[1,1,1]])
-                        #  here is where things get slowly
-                        conv2d = signal.convolve2d(img, normal, boundary='symm', mode='same')
-                        thresh = 4.0
-                        conv2d[np.where(conv2d < thresh)]  = 0
-                        conv2d[np.where(conv2d >= thresh)]  = 1
-                        conv = conv2d
+            for c in range(3):  # For each channel (R, G, B)
+                img = np.zeros([w, w], float)
+                conv = 0
+                
+                for x in range(w):
+                    for y in range(w):
+                        if self.active[l, c, x, y]:  # Check activity in the current channel
+                            img[x, y] = 1
+                            normal = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+                            # Convolve the image with the kernel
+                            conv2d = signal.convolve2d(img, normal, boundary='symm', mode='same')
+                            thresh = 4.0
+                            conv2d[np.where(conv2d < thresh)] = 0
+                            conv2d[np.where(conv2d >= thresh)] = 1
+                            conv = conv2d
 
-            img_array[l] = conv
-            # plt.imshow(img)
-            # plt.show()
+                img_array[l, c] = conv  # Store the convolved image in the correct channel
+
+                # Uncomment to visualize each channel if needed
+                # plt.imshow(img)
+                # plt.show()
 
         return img_array
 
 def save_array(input_array, path):
-    cast_array = (255.0 / input_array.max() * (input_array - input_array.min())).astype(np.uint8)
-    save_image = Image.fromarray(cast_array)
-    # colorized_image = ImageOps.colorize(save_image, (0,0,0), (0,255,0))
-    # colorized_image.save(path)
-    save_image.save(path)
-    # print("SAVING ESTIMATED DEPTHMAP TO: %s" % (path))
+    """ Save the input array as an image to the specified path """
+    # Check if the array is 3-dimensional (i.e., layers, channels, width, height)
+    if input_array.ndim == 4:  # [num_layers, channels, width, height]
+        # Convert each layer to an image and save
+        for l in range(input_array.shape[0]):  # Iterate over layers
+            cast_array = (255.0 / input_array[l].max() * (input_array[l] - input_array[l].min())).astype(np.uint8)
+            save_image = Image.fromarray(cast_array.transpose(1, 2, 0))  # Convert from (channels, height, width) to (height, width, channels)
+            save_image.save(f"{path}_layer_{l}.png")  # Save each layer separately
+            print(f"SAVING LAYER {l} TO: {path}_layer_{l}.png")
+    else:
+        # Handle single-layer input array
+        cast_array = (255.0 / input_array.max() * (input_array - input_array.min())).astype(np.uint8)
+        save_image = Image.fromarray(cast_array)
+        save_image.save(path)
+        print(f"SAVING IMAGE TO: {path}")
 
 def save_LRactivity(layer_activity,patch_count,ident_hash):
   Path(parent_path+"/images/activity/{}/l".format(ident_hash)).mkdir(parents=True, exist_ok=True)
@@ -490,4 +544,4 @@ p = calculate_optimal_p(t,r,a) + pshift
 print("-------------------------------------")
 print("P value is: ",p)
 print("-------------------------------------")
-x = run_experiment(200, 20, 80000, 16, 128, p, r, t, a, auto, 70, gt, parent_path)
+x = run_experiment(200, 20, 20000, 16, 128, p, r, t, a, auto, 70, gt, parent_path)
