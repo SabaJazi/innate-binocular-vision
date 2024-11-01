@@ -193,7 +193,7 @@ def save_LRfilters(first_eye,second_eye,ident_hash):
   Path(parent_path+"/images/filters/{}/r".format(ident_hash)).mkdir(parents=True, exist_ok=True)
 
   # for filter_count in range(first_eye.shape[0]):
-  for filter_count in range(200):
+  for filter_count in range(100):
 
     filename_r = "r{}.png".format(filter_count)
     filename_l = "l{}.png".format(filter_count)
@@ -480,14 +480,27 @@ Path(parent_path+"/images").mkdir(parents=True, exist_ok=True)
 Path(parent_path+"/json").mkdir(parents=True, exist_ok=True)
 Path(parent_path+"/images/depthmaps").mkdir(parents=True, exist_ok=True)
 
-# -------------------------------------------------------
-r = 3
-pshift = 0.01
-a=0.1
-t=8
+# -----------------------single run--------------------------------
+# r = 3
+# pshift = 0.01
+# a=0.1
+# t=8
 
-p = calculate_optimal_p(t,r,a) + pshift
-print("-------------------------------------")
-print("P value is: ",p)
-print("-------------------------------------")
-x = run_experiment(200, 20, 80000, 16, 128, p, r, t, a, auto, 70, gt, parent_path)
+# p = calculate_optimal_p(t,r,a) + pshift
+# print("-------------------------------------")
+# print("P value is: ",p)
+# print("-------------------------------------")
+# x = run_experiment(100, 20, 10000, 16, 128, p, r, t, a, auto, 70, gt, parent_path)
+
+
+# loop multiple experiments----------------------------------------
+pshift = 0.01
+for r in range(2, 5):
+    for t in range(4,5):
+        for a in np.arange(0.1, 0.8, 0.1):
+            p = calculate_optimal_p(t,r,a) + pshift
+            print("-------------------------------------")
+            print("P value is: ",p)
+            print("-------------------------------------")
+            x = run_experiment(100, 20, 10000, 9, 256, p, r, t, a, auto, 70, gt, parent_path)
+
