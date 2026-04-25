@@ -5,3 +5,6 @@ scipy
 scikit-learn
 colorama
 numba
+
+# GUI note:
+# tkinter is part of Python stdlib, but on Linux you may need OS package `python3-tk`.

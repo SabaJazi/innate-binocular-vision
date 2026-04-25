@@ -19,6 +19,12 @@ Linux/macOS:
 python3 -m venv .venv && ./.venv/bin/python -m pip install -r requirements.txt
 ```
 
+If this fails on Debian/Ubuntu with an ensurepip or venv error, install the system package first:
+
+```bash
+sudo apt-get update && sudo apt-get install -y python3.12-venv
+```
+
 Windows (PowerShell):
 
 ```powershell
@@ -30,9 +36,11 @@ py -m venv .venv; .\.venv\Scripts\python -m pip install -r requirements.txt
 A setup task is already included in [.vscode/tasks.json](.vscode/tasks.json).
 
 In VS Code:
-1. Open the Command Palette.
+1. Open the Command Palette using View > Command Palette, or press F1.
 2. Run Tasks: Run Task.
 3. Choose Setup venv from requirements.
+
+If the task does not appear, make sure the repository folder is opened as a VS Code workspace and reload the window once.
 
 ## Run the Project
 
@@ -95,9 +103,27 @@ Windows (PowerShell):
 .\.venv\Scripts\python -m ensurepip --upgrade; .\.venv\Scripts\python -m pip install -r requirements.txt
 ```
 
+### Virtual environment creation fails with ensurepip is not available
+
+On Debian/Ubuntu, install the venv package first, then rerun the setup command:
+
+```bash
+sudo apt-get update && sudo apt-get install -y python3.12-venv
+```
+
+If your distro uses a different Python version package, the package may be named `python3-venv` instead.
+
 ### python command not found
 
 Use python3 (Linux/macOS) or py (Windows) instead of python.
+
+### tkinter missing on Linux
+
+If the GUI script fails with tkinter errors, install the OS package:
+
+```bash
+sudo apt-get update && sudo apt-get install -y python3-tk
+```
 
 ### Verify imports after setup
 
