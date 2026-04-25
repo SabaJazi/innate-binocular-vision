@@ -1,8 +1,7 @@
-import os
 import numpy as np
 import argparse
-import datetime
 import json
+from pathlib import Path
 
 def generate_parameter_steps(min_value, max_value, step):
     return np.linspace(min_value, max_value, step)
@@ -27,11 +26,12 @@ def generate_lgn_parameter_set(a_array, r_array, p_array, t_array):
     return lgn_parameter_set
 
 def generate_experiment_set(experiment_id, depthmap_name, autostereogram_name, autostereogram_patch, num_filters, num_components, num_patches, patch_size, lgn_size, lgn_parameter_set):
+    repo_root = Path(__file__).resolve().parent
     experiment_set = {
     "experiment_id": experiment_id,
     "parameter_path": "experiments/{}/inputs/parameters".format(experiment_id),
-    "depthmap_path": "experiments/{}/inputs/{}".format(experiment_id, depthmap_name),
-    "autostereogram_path": "experiments/{}/inputs/{}".format(experiment_id,autostereogram_name),
+    "depthmap_path": str((repo_root / depthmap_name).resolve()),
+    "autostereogram_path": str((repo_root / autostereogram_name).resolve()),
     "autostereogram_patch": autostereogram_patch,
     "num_filters": num_filters,
     "num_components": num_components,
@@ -47,6 +47,16 @@ if __name__ == "__main__":
     parser.add_argument("-lr", "--lgn_r", help="LGN model radius (min, max, step)", nargs=3, metavar=("min", "max", "step"), type=float, required=True)
     parser.add_argument("-lp", "--lgn_p", help="LGN model proportion (min, max, step)", nargs=3, metavar=("min", "max", "step"), type=float, required=True)
     parser.add_argument("-lt", "--lgn_t", help="LGN model threshold (min, max, step)", nargs=3, metavar=("min", "max", "step"), type=float, required=True)
+    parser.add_argument("--experiment-id", type=int, default=1, help="Experiment identifier")
+    parser.add_argument("--depthmap-name", default="dm.png", help="Depthmap filename in the repository root")
+    parser.add_argument("--autostereogram-name", default="autostereogram.png", help="Autostereogram filename in the repository root")
+    parser.add_argument("--autostereogram-patch", type=int, default=5, help="Autostereogram patch size")
+    parser.add_argument("--num-filters", type=int, default=2000)
+    parser.add_argument("--num-components", type=int, default=20)
+    parser.add_argument("--num-patches", type=int, default=100000)
+    parser.add_argument("--patch-size", type=int, default=8)
+    parser.add_argument("--lgn-size", type=int, default=64)
+    parser.add_argument("--output", default="experiment1.json", help="Path to output experiment JSON")
     args = parser.parse_args()
 
     # Generate LGN parameter arrays
@@ -58,16 +68,21 @@ if __name__ == "__main__":
     # Generate LGN parameter set
     pset = generate_lgn_parameter_set(a_array, r_array, p_array, t_array)
 
-    # Generate experiment set
-    # args.autostereogram_patch=5, nf=2000, nc=20,np=100000 ,ps=8,lgn_size=64
     exp = generate_experiment_set(
-        1 ,'depthmap_name', 'autosterogram_name', 5,
-        2000, 20, 100000, 8,
-        64, pset
+        args.experiment_id,
+        args.depthmap_name,
+        args.autostereogram_name,
+        args.autostereogram_patch,
+        args.num_filters,
+        args.num_components,
+        args.num_patches,
+        args.patch_size,
+        args.lgn_size,
+        pset,
     )
 
     # Save experiment parameter file locally
-    with open("experiment.json", "w") as json_file:
+    with open(args.output, "w", encoding="utf-8") as json_file:
         json.dump(exp, json_file, indent=4)
 
-    print("Experiment parameter file 'experiment.json' created.")
+    print("Experiment parameter file '{}' created.".format(args.output))

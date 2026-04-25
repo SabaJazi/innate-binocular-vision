@@ -1,50 +1,46 @@
-import os
 import ibv
 import json
-import random
 import datetime
 import argparse
-import numpy as np
+from pathlib import Path
 
-def get_parameters(experiment_id):
-    # parameters_file = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiment{}.json".format(experiment_id)
-    parameters_file = r"C:\Users\19404\innate-binocular-vision\experiment{}.json".format(experiment_id)
 
-    with open(parameters_file, "r") as f:
+def resolve_input_path(path_value):
+    candidate = Path(path_value)
+    if candidate.exists():
+        return str(candidate)
+
+    repo_candidate = Path(__file__).resolve().parent / candidate.name
+    if repo_candidate.exists():
+        return str(repo_candidate)
+
+    raise FileNotFoundError(
+        "Could not resolve input path '{}' or fallback '{}'".format(path_value, repo_candidate)
+    )
+
+def get_parameters(parameters_file):
+    with open(parameters_file, "r", encoding="utf-8") as f:
         experiment_parameters = json.load(f)
     return experiment_parameters
  
  #--------------------------------------------------------
-def run_workload(experiment_parameters):
-
-    started = []
-    total = []
-    # path = r"C:\vscode\innate-binocular-vision\innate-binocular-vision\experiments\{}\outputs\json".format(experiment_parameters["experiment_id"])
-    path = r"C:\Users\19404\innate-binocular-vision"
-
-    # List files in the output JSON directory
-    started = os.listdir(path)
-    
+def run_workload(experiment_parameters, output_root):
+    results = []
     for lgn_parameters in experiment_parameters["lgn_parameter_set"]:
-        total.append(lgn_parameters["name"])
-    
-    while len(set(total)) != len(set(started)):
-        diff = list(set(total) - set(started))
-        if len(diff) == 0:
-            break
-        # choose one of names from json file and
-        #  get the parameters of it
-        selection = random.choice(diff)
         experiment_subparameters = extract_subparameters(
             experiment_parameters,
-            experiment_parameters["lgn_parameter_set"][total.index(selection)]
+            lgn_parameters,
+            output_root,
         )
-        # run experiment for that set of parameters
-        work(experiment_subparameters)
+        results.append(work(experiment_subparameters))
+    return results
 #  ---------------------------------------------------------- 
 
-def extract_subparameters(experiment_parameters, lgn_parameters):
+def extract_subparameters(experiment_parameters, lgn_parameters, output_root):
     #pass index instead of lgn_parameters?
+    output_root = Path(output_root)
+    image_root = output_root / "images" / lgn_parameters["name"]
+
     subparameters = {
     "experiment_id": experiment_parameters["experiment_id"],
     "parameter_path": experiment_parameters["parameter_path"],
@@ -60,14 +56,10 @@ def extract_subparameters(experiment_parameters, lgn_parameters):
     "started": None,
     "finished": None,
     "correlation": None,
-    # "lgn_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\layers".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "lgn_dump": "C:\\Users\\19404\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\layers".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    # "patch_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\patches".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "patch_dump": "CC:\\Users\\19404\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\patches".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    # "filter_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\filters".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    "filter_dump": "C:\\Users\\19404\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\filters".format(experiment_parameters["experiment_id"],lgn_parameters["name"]),
-    # "activity_dump": "C:\\vscode\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\activity".format(experiment_parameters["experiment_id"],lgn_parameters["name"])
-    "activity_dump": "C:\\Users\\19404\\innate-binocular-vision\\innate-binocular-vision\\experiments\\{}\\outputs\\images\\{}\\activity".format(experiment_parameters["experiment_id"],lgn_parameters["name"])
+    "lgn_dump": str(image_root / "layers"),
+    "patch_dump": str(image_root / "patches"),
+    "filter_dump": str(image_root / "filters"),
+    "activity_dump": str(image_root / "activity"),
     }
     return subparameters
 
@@ -75,6 +67,9 @@ def extract_subparameters(experiment_parameters, lgn_parameters):
 def work(experiment_subparameters):
     # print(experiment_subparameters["depthmap_path"])
     try:
+        experiment_subparameters = dict(experiment_subparameters)
+        experiment_subparameters["depthmap_path"] = resolve_input_path(experiment_subparameters["depthmap_path"])
+        experiment_subparameters["autostereogram_path"] = resolve_input_path(experiment_subparameters["autostereogram_path"])
         results = ibv.local_experiment(experiment_subparameters, 5, 5)
     except ValueError as err:
         results = experiment_subparameters
@@ -87,10 +82,32 @@ def work(experiment_subparameters):
         if str(err) == 'LGN: activity greater than high bound':
             results["correlation"] = 2.0
 
+    return results
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run IBV workload from an experiment JSON file")
+    parser.add_argument("--experiment-file", default="experiment1.json", help="Path to experiment JSON")
+    parser.add_argument("--output", default="workload_results.json", help="Path to output results JSON")
+    parser.add_argument(
+        "--output-root",
+        default=str(Path("experiments") / "outputs"),
+        help="Root path for generated image/output folders",
+    )
+    return parser.parse_args()
+
+
 def run():
-    experiment_id = 1
-    p = get_parameters(experiment_id)
-    run_workload(p)
+    args = parse_args()
+
+    parameters = get_parameters(args.experiment_file)
+    output_root = Path(args.output_root)
+    output_root.mkdir(parents=True, exist_ok=True)
+
+    results = run_workload(parameters, output_root)
+    with open(args.output, "w", encoding="utf-8") as out_file:
+        json.dump(results, out_file, indent=4)
+
+    print("Saved {} workload result(s) to {}".format(len(results), args.output))
 
 
 run()

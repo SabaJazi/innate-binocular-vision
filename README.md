@@ -50,16 +50,30 @@ If the task does not appear, make sure the repository folder is opened as a VS C
 ./.venv/bin/python 4-exp.py
 ```
 
-### Option B: Generate experiment parameter JSON
+### Generate experiment JSON
 
 ```bash
 ./.venv/bin/python 2-create_exp_local.py -la 0.05 0.5 5 -lr 1 4 4 -lp 0.1 1 5 -lt 1 10 10
 ```
 
-### Option C: Open the parameter input GUI
+### Option C: Use the parameter CLI helper
 
 ```bash
-./.venv/bin/python 1-parameter_input_gui.py.py
+./.venv/bin/python 1-parameter_input.py
+  -la 0.05 0.5 5 -lr 1 4 4 -lp 0.1 1 5 -lt 1 10 10
+```
+
+### Run workload
+
+```bash
+./.venv/bin/python 4-exp.py --experiment-file experiment1.json --output workload_results.json
+```
+
+### Clean generated files
+
+```bash
+./.venv/bin/python clean_experiment_files.py --dry-run
+./.venv/bin/python clean_experiment_files.py
 ```
 
 ## Notes
@@ -67,7 +81,7 @@ If the task does not appear, make sure the repository folder is opened as a VS C
 - The project imports code from [ibv.py](ibv.py).
 - Dependencies are listed in [requirements.txt](requirements.txt).
 - The virtual environment folder .venv is ignored by git via [.gitignore](.gitignore).
-- Some paths inside [4-exp.py](4-exp.py) are currently hardcoded for Windows and may need adjustment for Linux/macOS.
+- Scripts are now CLI-first and use portable paths for Linux/macOS/Windows.
 
 ## Troubleshooting
 
@@ -116,14 +130,6 @@ If your distro uses a different Python version package, the package may be named
 ### python command not found
 
 Use python3 (Linux/macOS) or py (Windows) instead of python.
-
-### tkinter missing on Linux
-
-If the GUI script fails with tkinter errors, install the OS package:
-
-```bash
-sudo apt-get update && sudo apt-get install -y python3-tk
-```
 
 ### Verify imports after setup
 
