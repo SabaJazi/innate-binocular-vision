@@ -119,7 +119,6 @@ def scale_disparity(activity_map, disparity_map):
     return scaled_disparity
 
 
-
 # In[4]:
 
 def generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a):
@@ -138,26 +137,16 @@ def generate_patches(num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lg
             raise err
 
         patches_1 = np.array(skimage.extract_patches_2d(layer_activity[0], (patch_size, patch_size)))
-        # plt.imshow(patches_1[0])
-        # plt.title('patch sample from layer 1')
-        # plt.show()
         patches_2 = np.array(skimage.extract_patches_2d(layer_activity[1], (patch_size, patch_size)))
-        # plt.imshow(patches_2[0])
-        # plt.title('patch sample from layer 2')
-        # plt.show()
         reshaped_patches_1 = patches_1.reshape(-1,patches_1.shape[1]*patches_1.shape[1])
         reshaped_patches_2 = patches_2.reshape(-1,patches_2.shape[1]*patches_2.shape[1])
         composite_patches = np.concatenate((reshaped_patches_1, reshaped_patches_2), axis=1)
 
-        # removing the patches that don't have variance in pixel values
         blacklist = []
         for x in range(composite_patches.shape[0]):
             if composite_patches[x][:half_comp].std() == 0.0 or composite_patches[x][half_comp:].std() == 0.0:
                 blacklist.append(x)
         composite_patches = np.delete(composite_patches, np.array(blacklist), axis=0)
-        # plt.imshow(composite_patches)
-        # plt.title('Composit patch')
-        # plt.show()
         if (patch_count == 0):
             patch_base = composite_patches
         else:
@@ -174,8 +163,6 @@ def perform_ica(num_components, patches):
 
     print(Fore.GREEN + 'perform_ica:')
     print(Style.RESET_ALL)
-    # Run ICA on all the patches and return generated components
-    # note, sensitive to n_components
     ica_instance = FastICA(n_components=num_components,
                            random_state=1, max_iter=1000000, whiten='standard')
     icafit = ica_instance.fit(patches)
@@ -192,13 +179,9 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
     filter_count = 0
     filter_base=[]
     while (filter_count < num_filters):
-        # try:
         patches = generate_patches(
         num_patches, patch_size, lgn_width, lgn_p, lgn_r, lgn_t, lgn_a)
-    # except ValueError as err:
-            # raise err
         filters = perform_ica(num_components, patches[0])
-        # print(filters)
         if (filter_count == 0):
             print('check1' )
             print(filters)
@@ -247,11 +230,7 @@ def linear_disparity(first_eye, second_eye):
 
 def normalize_disparity(disparity_map):
     with np.errstate(divide='ignore', invalid='ignore'):
-        #normalize_disparity = (disparity_map - np.mean(disparity_map, axis=0)) / np.std(disparity_map)
         normalized_disparity = (disparity_map / np.mean(disparity_map, axis=0))
-
-        #sum_normalized_disparity = np.sum(normalized_disparity, axis=0)
-        #double_normalized_disparity = normalized_disparity / sum_normalized_disparity
     return normalized_disparity
 
 
@@ -259,7 +238,6 @@ def normalize_disparity(disparity_map):
 
 def generate_activity(autostereogram, asg_patch_size, first_eye, second_eye, disparity_map):
     for index in range(first_eye.shape[0]):
-        # make this more elegant
         convolution = double_convolve(
             first_eye[index], second_eye[index], autostereogram, asg_patch_size)
         scaled_activity = scale_disparity(convolution, disparity_map[index])
@@ -278,7 +256,6 @@ def estimate_depth(activity):
         for y in range(activity.shape[1]):
             peak = int(
                 np.abs(np.nanargmax(activity[x, y])-int(activity.shape[2]/2)))
-            #peak = np.nanargmax(activity[x,y])
             depth_estimate[x, y] = peak
     return depth_estimate
 
@@ -300,8 +277,6 @@ def generate_ident_hash(num_filters, num_components, num_patches, patch_size, lg
     output_hash = hashlib.sha256(input_string.encode('utf-8')).hexdigest()
     return output_hash[:20]
 
-
-# In[14]:
 
 # In[15]:
 
@@ -334,8 +309,6 @@ def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_wid
     plt.title('disparity histogram')
     plt.show()
 
-    #normalized_disparity = disparity_map
-
     normalized_disparity = normalize_disparity(disparity_map)
     plt.hist(disparity_distribution(normalized_disparity))
     plt.title('normalized disparity histogram')
@@ -353,11 +326,6 @@ def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_wid
     image_path = "%s/images/%s.png" % (experiment_folder, ident_hash)
     data_path = "%s/json/%s.json" % (experiment_folder, ident_hash)
     save_array(depth_estimate, "im.png")
-    # client = storage.Client()
-    # bucket = client.get_bucket('ibvdata')
-    # blob = bucket.blob(image_path)
-    # blob.upload_from_filename("im.png")
-    # blob = bucket.blob(data_path)
     params = {
         "num_filters": num_filters,
         "num_components": num_components,
@@ -372,11 +340,9 @@ def run_experiment(num_filters, num_components, num_patches, patch_size, lgn_wid
         "time": time.strftime('%a, %d %b %Y %H:%M:%S GMT', current_time),
         "id": ident_hash
     }
-    # blob.upload_from_string(json.dumps(params))
 
 
     return params
-
 
 
 def distance(x0, y0, x1, y1):
@@ -402,7 +368,6 @@ class LGN:
 
     def reset_wave(self):
         """ create another random wave """
-        # setting up the network
         w = self.width
         self.allcells = (self.num_layers * w * w)
         self.recruitable = np.random.rand(self.num_layers, w, w) < self.p
@@ -411,23 +376,19 @@ class LGN:
         self.tot_active = 0
         self.active = np.zeros([self.num_layers, w, w], bool)
         self.active_neighbors = np.zeros([self.num_layers, w, w], int)
-        self.activated = []  # the recently active nodes
+        self.activated = []
 
         if self.tot_recruitable > 0:
-            # changed active threshold from 20% to 1% 
             while self.fraction_active() < 0.20:
                 self.activate()
 
     def fraction_active(self):
-        """ returns the fraction of potentially recruitable cells which are active """
         if self.tot_recruitable > 0:
             return float(self.tot_recruitable_active) / self.tot_recruitable
         else:
             return float('NaN')
 
     def propagate(self):
-        """ propagate the activity if a valid node has been activated """
-        # activated only has recruitable and currently inactive members
         while len(self.activated) > 0:
             act_l, act_x, act_y = self.activated.pop()
             self.active[act_l, act_x, act_y] = True
@@ -439,24 +400,22 @@ class LGN:
                         if distance(act_x, act_y, x, y) <= self.r:
                             xi = x % self.width
                             yi = y % self.width
-                            if l != act_l:  # spread the activity across layers
-                                if np.random.rand() < self.trans:  # transfer the activity
+                            if l != act_l:
+                                if np.random.rand() < self.trans:
                                     self.active_neighbors[l, xi, yi] += 1
-                            else:  # if it is the same layer
+                            else:
                                 self.active_neighbors[l, xi, yi] += 1
                             if self.active_neighbors[l, xi, yi] == self.t and not self.active[l, xi, yi]:
                                 if self.recruitable[l, xi, yi]:
                                     self.activated.append([l, xi, yi])
-                                else:  # activate the node but don't propagate the activity
+                                else:
                                     self.active[l, xi, yi] = True
                                     self.tot_active += 1
 
     def activate(self):
-        """ activate a random potentially active node """
         if self.fraction_active() > 0.95:
             return
 
-        # pick a random point
         while True:
             l = np.random.randint(0, self.num_layers)
             x = np.random.randint(0, self.width)
@@ -467,12 +426,6 @@ class LGN:
         self.propagate()
 
     def correlation(self):
-        """ returns the correlation between the left and right images """
-        # the total number of activations in common
-        # same_count = len(where(self.active[0,:,:] == self.active[1,:,:])[0])
-        # return float(same_count) / (self.width * self.width)
-
-        # create an activity matrix of 0's and 1's (instead of True and False)
         if self.num_layers < 2:
             print("monocular models cannot have correlations between eye layers")
             return 0
@@ -489,10 +442,6 @@ class LGN:
         return cov / (std0 * std1)
 
     def make_img_mat(self,p_c, show_img=True):
-        # print(Fore.RED + 'make_img_mat:')
-        # print(Style.RESET_ALL)
-
-        """ return a matrix of 1's and 0's showing the activity in both layers """
         percentage_active = float(self.active.sum()) / self.allcells
         
         print(p_c,': percentage_active:'  ,percentage_active)
@@ -514,7 +463,6 @@ class LGN:
                 for y in range(0, w-1):
                     if self.active[l, x, y]:
                         img[x, y] = 1
-                        # Defines a 3x3 convolution kernel
                         normal = np.array([[1,1,1],[1,0,1],[1,1,1]])
                         conv2d = signal.convolve2d(img, normal, boundary='symm', mode='same')
                         thresh = 4.0
@@ -523,31 +471,11 @@ class LGN:
                         conv = conv2d
 
             img_array[l] = conv
-            # Next line shows each of activity patern 1 by 1
-            # plt.imshow(img)
-            # plt.title("LGN activity 64x64 layer {}".format(l+1))
-
-            # plt.show()
-
-            # plt.imshow(conv)
-            # plt.title("Convolved LGN activity layer {}".format(l+1))
-
-            # plt.show()
 
         return img_array
 
 
 def save_handler_local(path, input_array, suffix=None):
-    # if input_array.ndim == 2:
-    #     save_array(input_array, "tmp2.png")
-    #     if suffix is not None:
-    #         idx_path = os.path.join(path, suffix, "2")
-    #     else:
-    #         idx_path = os.path.join(path, "2")
-    #     os.makedirs(idx_path, exist_ok=True)
-    #     os.rename("tmp2.png", os.path.join(path, "tmp2.png"))
-    #     return
-
     for idx, input in enumerate(input_array):
         cast_array = (255.0 / input.max() * (input - input.min())).astype(np.uint8)
         save_image = Image.fromarray(cast_array)
@@ -558,9 +486,6 @@ def save_handler_local(path, input_array, suffix=None):
         else:
             idx_path = os.path.join(path, str(idx))
         os.makedirs(idx_path, exist_ok=True)
-        # suff="tmp"+time.strftime("%m%d%H%m%s")+".png"
-
-        # os.rename("tmp.png", os.path.join(idx_path, "tmp.png"))
         name="tmp"+str(idx)+".png"
         os.rename("tmp.png", os.path.join(idx_path, name))
 
@@ -570,10 +495,7 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
 
     current_dir = os.getcwd()
     depthmap_path =  experiment_subparameters["depthmap_path"]
-    # depthmap_path = os.path.join(current_dir, experiment_subparameters["depthmap_path"])
-
     autostereogram_path = experiment_subparameters["autostereogram_path"]
-    # autostereogram_path = os.path.join(current_dir,experiment_subparameters["autostereogram_path"])
 
     autostereogram = open_norm(autostereogram_path, verbose=False)
     groundtruth = np.array(Image.open(depthmap_path).convert("L"))
@@ -591,51 +513,15 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
 
     split_filters = unpack_filters(filters)
 
-    # save_handler_local(experiment_subparameters["lgn_dump"], lgn)
-    # save_handler_local(experiment_subparameters["filter_dump"], split_filters[0][:filter_max], "0")
-    # save_handler_local(experiment_subparameters["filter_dump"], split_filters[1][:filter_max], "1")
-    # save_handler_local(experiment_subparameters["patch_dump"], patches[:patch_max])
-
     disparity_map = linear_disparity(split_filters[0], split_filters[1])
     normalized_disparity = normalize_disparity(disparity_map)
     activity = generate_activity(autostereogram, experiment_subparameters["autostereogram_patch"], split_filters[0], split_filters[1], normalized_disparity)
     depth_estimate = estimate_depth(activity)
 
-    # save_handler_local(experiment_subparameters["activity_dump"], depth_estimate)
-
     correlation = np.corrcoef(depth_estimate.flatten(), groundtruth.flatten())[0, 1]
 
     experiment_subparameters["correlation"] = correlation
     return experiment_subparameters
-# --------------------run------------------------
 
-# experiment_subparameters = {
-#     "depthmap_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\dm.png",
-#     "autostereogram_path": r"C:\vscode\innate-binocular-vision\innate-binocular-vision\autostereogram.png",
-#     # "num_filters": 2000,
-#     "num_filters": 200,
-#     "num_components": 20,
-#     "num_patches": 100000,
-#     "patch_size": 8,
-#     "lgn_size": 64,
-#     "lgn_parameters":[[0.5, 1.5 , 10], [4, 4, 1],[1, 4, 8], [0.05 ,0.05, 1]],
-#     "lgn_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-#     "filter_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-#     "patch_dump": r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-#     "autostereogram_patch":r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-#     "activity_dump":r"C:\vscode\innate-binocular-vision\innate-binocular-vision",
-#     "correlation":r"C:\vscode\innate-binocular-vision\innate-binocular-vision"
-    
-# }
-# [[0.5 1.5 10], [4 4 1] ,[1 4 8], [0.05 0.05 1]]
-# Set the maximum values for patch and filter 
-# (original path_max=100000, original filter=200)
 patch_max = 10000
 filter_max = 20
-
-# Call the local_experiment function
-
-# result = local_experiment(experiment_subparameters, patch_max, filter_max)
-
-# Print the result or perform other actions as needed
-# print("Experiment result:", result)

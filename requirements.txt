@@ -1,0 +1,7 @@
+Pillow
+numpy
+matplotlib
+scipy
+scikit-learn
+colorama
+numba
