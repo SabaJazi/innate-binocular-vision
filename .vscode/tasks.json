@@ -1,0 +1,12 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup venv from requirements",
+      "type": "shell",
+      "command": "python3 -m venv .venv && ./.venv/bin/python -m pip install -r requirements.txt",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
