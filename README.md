@@ -78,7 +78,7 @@ If the task does not appear, make sure the repository folder is opened as a VS C
 
 ## Notes
 
-- The project imports code from [ibv.py](ibv.py).
+- The project imports code from [3-ibv.py](3-ibv.py).
 - Dependencies are listed in [requirements.txt](requirements.txt).
 - The virtual environment folder .venv is ignored by git via [.gitignore](.gitignore).
 - Scripts are now CLI-first and use portable paths for Linux/macOS/Windows.
@@ -136,13 +136,13 @@ Use python3 (Linux/macOS) or py (Windows) instead of python.
 Linux/macOS:
 
 ```bash
-./.venv/bin/python -c "import ibv; print(ibv.__file__)"
+./.venv/bin/python -c "import importlib.util, pathlib; p = pathlib.Path('3-ibv.py').resolve(); s = importlib.util.spec_from_file_location('ibv', p); m = importlib.util.module_from_spec(s); s.loader.exec_module(m); print(m.__file__)"
 ```
 
 Windows (PowerShell):
 
 ```powershell
-.\.venv\Scripts\python -c "import ibv; print(ibv.__file__)"
+.\.venv\Scripts\python -c "import importlib.util, pathlib; p = pathlib.Path('3-ibv.py').resolve(); s = importlib.util.spec_from_file_location('ibv', p); m = importlib.util.module_from_spec(s); s.loader.exec_module(m); print(m.__file__)"
 ```
 
-If successful, this prints the path to [ibv.py](ibv.py).
+If successful, this prints the path to [3-ibv.py](3-ibv.py).

@@ -1,8 +1,22 @@
-import ibv
+import importlib.util
 import json
 import datetime
 import argparse
 from pathlib import Path
+
+
+def load_ibv_module():
+    module_path = Path(__file__).resolve().parent / "3-ibv.py"
+    spec = importlib.util.spec_from_file_location("ibv", module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError("Unable to load IBV module from {}".format(module_path))
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+ibv = load_ibv_module()
 
 
 def resolve_input_path(path_value):
