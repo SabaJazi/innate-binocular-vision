@@ -76,6 +76,16 @@ If the task does not appear, make sure the repository folder is opened as a VS C
 ./.venv/bin/python clean_experiment_files.py
 ```
 
+## LGN Visuals
+
+Pipeline overview:
+
+![LGN pipeline overview](lgn_pipeline_overview.png)
+
+Internal detail:
+
+![LGN internal detail](lgn_internal_detail.png)
+
 ## Notes
 
 - The project imports code from [3-ibv.py](3-ibv.py).
