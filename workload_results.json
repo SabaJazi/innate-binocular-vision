@@ -1,0 +1,28 @@
+[
+    {
+        "experiment_id": 1,
+        "parameter_path": "experiments/1/inputs/parameters",
+        "depthmap_path": "/home/saba/VSCode_projects/innate-binocular-vision/dm.png",
+        "autostereogram_path": "/home/saba/VSCode_projects/innate-binocular-vision/autostereogram.png",
+        "autostereogram_patch": 5,
+        "num_filters": 20,
+        "num_components": 20,
+        "num_patches": 100,
+        "patch_size": 8,
+        "lgn_size": 64,
+        "lgn_parameters": {
+            "lgn_a": 0.5,
+            "lgn_r": 2.0,
+            "lgn_p": 0.592,
+            "lgn_t": 1.0,
+            "name": "a0.05_r1.00_p0.592_t1.00"
+        },
+        "started": null,
+        "finished": "2026-05-02_01:01:35",
+        "correlation": null,
+        "lgn_dump": "experiments/outputs/images/a0.05_r1.00_p0.592_t1.00/layers",
+        "patch_dump": "experiments/outputs/images/a0.05_r1.00_p0.592_t1.00/patches",
+        "filter_dump": "experiments/outputs/images/a0.05_r1.00_p0.592_t1.00/filters",
+        "activity_dump": "experiments/outputs/images/a0.05_r1.00_p0.592_t1.00/activity"
+    }
+]

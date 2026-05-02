@@ -88,6 +88,8 @@ def work(experiment_subparameters):
     except ValueError as err:
         results = experiment_subparameters
         results["finished"] = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        results["error"] = str(err)
+        print("Workload failed for {}: {}".format(results["lgn_parameters"]["name"], err))
         
         # Check error and set correlation
         if str(err) == 'LGN: activity less than low bound':
@@ -124,4 +126,5 @@ def run():
     print("Saved {} workload result(s) to {}".format(len(results), args.output))
 
 
-run()
+if __name__ == "__main__":
+    run()

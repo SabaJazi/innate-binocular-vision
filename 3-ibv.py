@@ -163,8 +163,9 @@ def perform_ica(num_components, patches):
 
     print(Fore.GREEN + 'perform_ica:')
     print(Style.RESET_ALL)
+    # scikit-learn versions in this project expect an explicit supported whiten mode.
     ica_instance = FastICA(n_components=num_components,
-                           random_state=1, max_iter=1000000, whiten='standard')
+                           random_state=1, max_iter=1000000, whiten='unit-variance')
     icafit = ica_instance.fit(patches)
     ica_components = icafit.components_
     return ica_components
@@ -186,7 +187,7 @@ def generate_filters(num_filters, num_components, num_patches, patch_size, lgn_w
             print('check1' )
             print(filters)
 
-            filter_base = np.append(filter_base, filters, axis=0)
+            filter_base = filters
 
             filter_count = filter_base.shape[0]
             print('filter count:' ,filter_count)
@@ -502,8 +503,8 @@ def local_experiment(experiment_subparameters, patch_max, filter_max):
 
     try:
         res = generate_filters(experiment_subparameters["num_filters"], experiment_subparameters["num_components"], experiment_subparameters["num_patches"],
-                               experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]['lgn_a'], 
-                               experiment_subparameters["lgn_parameters"]['lgn_r'] ,experiment_subparameters["lgn_parameters"]['lgn_p'], experiment_subparameters["lgn_parameters"]['lgn_t'])
+                       experiment_subparameters["patch_size"], experiment_subparameters["lgn_size"], experiment_subparameters["lgn_parameters"]['lgn_p'], 
+                       experiment_subparameters["lgn_parameters"]['lgn_r'] ,experiment_subparameters["lgn_parameters"]['lgn_t'], experiment_subparameters["lgn_parameters"]['lgn_a'])
     except ValueError as err:
         raise err
 
