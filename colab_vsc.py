@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import random
 from random import randint
-import progressbar
 
 from scipy import signal
 from scipy.interpolate import griddata
@@ -460,14 +459,37 @@ import os
 # parent_path="/content"
 # main_path="/content/drive/MyDrive/lab/LGN-IBV/results/"
 
-main_path = os.getcwd()
+def resolve_existing_path(base_path, candidates):
+    """Return the first existing path from candidates relative to base_path."""
+    for candidate in candidates:
+        candidate_path = base_path / candidate
+        if candidate_path.exists():
+            return candidate_path
+    searched = [str(base_path / c) for c in candidates]
+    raise FileNotFoundError(
+        "Could not find required file. Checked: {}".format(searched)
+    )
 
-Path(main_path+"/"+str(today)).mkdir(parents=True, exist_ok=True)
+
+main_path = Path(os.getcwd())
+
+(main_path / str(today)).mkdir(parents=True, exist_ok=True)
 # parent_path="/content/drive/MyDrive/lab/LGN-IBV/results/"+str(today)
-parent_path=main_path+"/"+str(today)
+parent_path = str(main_path / str(today))
 
-auto = open_norm(main_path+"/shift5_70patch.png",verbose=False)
-gt = np.array(Image.open(main_path+"/dm.png").convert("L"))
+auto_path = resolve_existing_path(main_path, [
+    Path("output") / "shift5_70patch.png",
+    Path("shift5_70patch.png"),
+])
+gt_path = resolve_existing_path(main_path, [
+    Path("dm.png"),
+    Path("output") / "dm.png",
+    Path("output") / "depthmap.png",
+    Path("output") / "inverted_dm.png",
+])
+
+auto = open_norm(str(auto_path), verbose=False)
+gt = np.array(Image.open(gt_path).convert("L"))
 
 #
 # order of variables:

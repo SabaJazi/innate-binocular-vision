@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import random
 from random import randint
-import progressbar
-
 from scipy import signal
 from scipy.interpolate import griddata
 from sklearn.decomposition import FastICA
