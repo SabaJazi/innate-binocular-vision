@@ -41,7 +41,7 @@ class LGN:
         """ create another random wave """
         # setting up the network
         w = self.width
-        self.allcells = (self.num_layers * w * w)
+        # self.allcells = (self.num_layers * w * w)
         self.recruitable = np.random.rand(self.num_layers, w, w) < self.p
         self.tot_recruitable = len(np.where(self.recruitable)[0])
         self.tot_recruitable_active = 0
@@ -127,37 +127,51 @@ class LGN:
 
     def make_img_mat(self, show_img=True):
         """ return a matrix of 1's and 0's showing the activity in both layers """
-        percentage_active = float(self.active.sum()) / self.allcells
-        print('\npercent active: ', percentage_active)
-        if percentage_active < 0.05:
-            print('LGN: activity less than low bound\n')
-            raise ValueError('LGN: activity less than low bound')
-        if percentage_active > 0.99:
-            print('LGN: activity greater than high bound\n')
-            raise ValueError('LGN: activity greater than high bound')
+        # percentage_active = float(self.active.sum()) / self.allcells
+        # print('\npercent active: ', percentage_active)
+        # if percentage_active < 0.05:
+        #     print('LGN: activity less than low bound\n')
+        #     raise ValueError('LGN: activity less than low bound')
+        # if percentage_active > 0.99:
+        #     print('LGN: activity greater than high bound\n')
+        #     raise ValueError('LGN: activity greater than high bound')
 
 
         img_array = np.zeros([self.num_layers, self.width, self.width])
-        w = self.width
+        # w = self.width
+        # for l in range(self.num_layers):
+        #     img = np.zeros([w, w], float)
+        #     conv = 0
+        #     for x in range(0, w-1):
+        #         for y in range(0, w-1):
+        #             if self.active[l, x, y]:
+        #                 img[x, y] = 1
+        #                 normal = np.array([[1,1,1],[1,0,1],[1,1,1]])
+        #                 #  here is where things get slowly
+        #                 conv2d = signal.convolve2d(img, normal, boundary='symm', mode='same')
+        #                 thresh = 4.0
+        #                 conv2d[np.where(conv2d < thresh)]  = 0
+        #                 conv2d[np.where(conv2d >= thresh)]  = 1
+        #                 conv = conv2d
 
+        #     img_array[l] = conv
+        #     # plt.imshow(img)
+        #     # plt.show()
+
+        # return img_array
+        # replaced with older version for debuging purposes
+        border_width = 10 if self.num_layers > 1 else 0
+        w = self.width
         for l in range(self.num_layers):
             img = np.zeros([w, w], float)
-            conv = 0
-            for x in range(0, w-1):
-                for y in range(0, w-1):
-                    if self.active[l, x, y]:
-                        img[x, y] = 1
-                        normal = np.array([[1,1,1],[1,0,1],[1,1,1]])
-                        #  here is where things get slowly
-                        conv2d = signal.convolve2d(img, normal, boundary='symm', mode='same')
-                        thresh = 4.0
-                        conv2d[np.where(conv2d < thresh)]  = 0
-                        conv2d[np.where(conv2d >= thresh)]  = 1
-                        conv = conv2d
+            for x in range(0,w-1):
+                for y in range(0,w-1):
+                    if self.active[l,x,y]:
+                        img[x,y] = 1
 
-            img_array[l] = conv
-            # plt.imshow(img)
-            # plt.show()
+            img_array[l] = img
+            #plt.imshow(img)
+            #plt.show()
 
         return img_array
 
@@ -478,14 +492,15 @@ main_path = Path(os.getcwd())
 parent_path = str(main_path / str(today))
 
 auto_path = resolve_existing_path(main_path, [
-    Path("output") / "shift5_70patch.png",
-    Path("shift5_70patch.png"),
+    # Path("output") / "shift5_70patch.png",
+    # Path("shift5_70patch.png"),
+    Path("original_shift5_70patch.png"),
 ])
 gt_path = resolve_existing_path(main_path, [
-    Path("dm.png"),
-    Path("output") / "dm.png",
-    Path("output") / "depthmap.png",
-    Path("output") / "inverted_dm.png",
+    Path("original_dm.png"),
+    # Path("output") / "dm.png",
+    # Path("output") / "depthmap.png",
+    # Path("output") / "inverted_dm.png",
 ])
 
 auto = open_norm(str(auto_path), verbose=False)
