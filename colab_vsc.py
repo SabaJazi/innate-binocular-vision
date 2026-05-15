@@ -533,8 +533,8 @@ Path(parent_path+"/images/depthmaps").mkdir(parents=True, exist_ok=True)
 # --------------------loop multiple experiments--------------------
 pshift = 0.01
 for r in range(2, 5):
-    for t in range(4,5):
-        for a in np.arange(0.1, 0.8, 0.1):
+    for t in range(3, 5):
+        for a in np.arange(0.1, 0.7, 0.1):
             p = calculate_optimal_p(t,r,a) + pshift
             print("-------------------------------------")
             print("P value is: ",p)

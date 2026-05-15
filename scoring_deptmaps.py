@@ -4,54 +4,83 @@ import json
 import matplotlib.pyplot as plt
 import math
 from decimal import Decimal
+from collections import defaultdict
 
 path_to_dm = 'C:\\Users\\19404\\innate-binocular-vision\\2026-05-15\\images\\depthmaps'
-
 path_to_json = 'C:\\Users\\19404\\innate-binocular-vision\\2026-05-15\\json\\'
 
-json_files = [pos_json for pos_json in os.listdir(path_to_json) if pos_json.endswith('.json')]
-# jsons_data = pd.DataFrame(columns=['id','corr','lgn_p','lgn_a', 'lgn_r', 'lgn_t'])
-# for index, js in enumerate(json_files):
-#   with open(os.path.join(path_to_json, js)) as json_file:
-#         json_text = json.load(json_file)
-#         id = json_text['id']
-#         corr = json_text['corr']
-#         lgn_p = json_text['lgn_p']
-#         lgn_a = json_text['lgn_a']
-#         lgn_r = json_text['lgn_r']
-#         lgn_t = json_text['lgn_t']
-#         jsons_data.loc[index] = [id, corr, lgn_p, lgn_a, lgn_r, lgn_t]
-lgn_a_values = []
-dm_files = []
-sorted_json_files = []
+json_files = [p for p in os.listdir(path_to_json) if p.endswith('.json')]
 
-for json_file in json_files:
-    with open(os.path.join(path_to_json, json_file)) as f:
-        json_data = json.load(f)
-        # if json_data['lgn_t'] == 2 and json_data['lgn_r'] ==2:
-        lgn_a_values.append(Decimal(str(json_data['lgn_a'])))
-        dm_files.append(json_file[:-5] + '.png')
-        sorted_json_files.append(json_file)
+items = []
+for jf in json_files:
+    with open(os.path.join(path_to_json, jf)) as f:
+        jd = json.load(f)
+    try:
+        lgn_a = Decimal(str(jd.get('lgn_a', 'nan')))
+    except Exception:
+        lgn_a = Decimal('NaN')
+    lgn_t = int(jd.get('lgn_t', -999))
+    corr = float(jd.get('corr', 0))
+    items.append({
+        'json': jf,
+        'dm': jf[:-5] + '.png',
+        'lgn_a': lgn_a,
+        'lgn_t': lgn_t,
+        'corr': corr
+    })
 
-sorted_indices = sorted(range(len(lgn_a_values)), key=lambda k: lgn_a_values[k])
-sorted_dm_files = [dm_files[i] for i in sorted_indices]
-sorted_json_files = [sorted_json_files[i] for i in sorted_indices]
+if not items:
+    print("No JSON files found in", path_to_json)
+    raise SystemExit
 
-fig, axes = plt.subplots(1, len(sorted_dm_files), figsize=(15, 5))
+# Group by lgn_a and sort each group by lgn_t
+groups = defaultdict(list)
+for it in items:
+    groups[it['lgn_a']].append(it)
+for k in groups:
+    groups[k].sort(key=lambda x: x['lgn_t'])
 
-for ax, dm_file, json_file in zip(axes, sorted_dm_files, sorted_json_files):
-    img = cv2.imread(os.path.join(path_to_dm, dm_file), cv2.IMREAD_GRAYSCALE)
-    with open(os.path.join(path_to_json, json_file)) as f:
-        json_data = json.load(f)
-    corr_value = round(json_data['corr'], 2)
-    lgn_a_value = round(json_data['lgn_a'], 3)
-    ax.imshow(img, cmap='gray')
-    # Set title for each image using the "corr" value and "lgn_a" value
-    # ax.set_title(f'corr={corr_value}\nlgn_a={lgn_a_value}')
-    ax.set_title(f'lgn_a={lgn_a_value}\ncorr={corr_value}')
+# Build rows: each row corresponds to up to `cols` items of the same lgn_a.
+cols = 6
+row_slices = []
+for lgn_a in sorted(groups.keys()):
+    lst = groups[lgn_a]
+    for i in range(0, len(lst), cols):
+        row_slices.append((lgn_a, lst[i:i+cols]))
 
-    ax.axis('off')
+rows = len(row_slices)
+fig, axes = plt.subplots(rows, cols, figsize=(cols * 1.2, rows * 1.1), dpi=100)
+if rows == 1:
+    axes = [axes] if cols == 1 else axes
+axes_flat = axes.flatten() if hasattr(axes, 'flatten') else list(axes)
 
-plt.tight_layout(pad=1.0)
+for row_idx, (lgn_a, slice_items) in enumerate(row_slices):
+    for col_idx in range(cols):
+        ax = axes_flat[row_idx * cols + col_idx]
+        if col_idx < len(slice_items):
+            it = slice_items[col_idx]
+            img_path = os.path.join(path_to_dm, it['dm'])
+            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            title = f"lgn_t={it['lgn_t']}\ncorr={it['corr']:.2f}"
+
+            if img is None:
+                ax.text(0.5, 0.5, 'Image not found', ha='center', va='center')
+            else:
+                ax.imshow(img, cmap='gray')
+            ax.set_title(title, fontsize=8)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            if col_idx == 0:
+                ax.set_ylabel(f"lgn_a={lgn_a}", fontsize=9)      # show lgn_a at left of each row
+            if row_idx == rows - 1:
+                ax.set_xlabel(f"lgn_t={it['lgn_t']}", fontsize=9)  # show lgn_t under bottom-row columns
+       
+        else:
+            ax.axis('off')
+        ax.axis('off')
+fig.supylabel('lgn_a', fontsize=11)
+fig.supxlabel('lgn_t', fontsize=11)
+# plt.tight_layout(pad=0.1)
+plt.subplots_adjust(wspace=0.12, hspace=0.68, left=0.02, right=0.98, top=0.96, bottom=0.02)
 
 plt.show()
