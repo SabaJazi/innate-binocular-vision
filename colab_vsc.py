@@ -515,7 +515,7 @@ Path(parent_path+"/images/depthmaps").mkdir(parents=True, exist_ok=True)
 # x = run_experiment(100, 20, 10000, 16, 128, p, r, t, a, auto, 70, gt, parent_path)
 
 
-# loop multiple experiments----------------------------------------
+# --------------------loop multiple experiments--------------------
 pshift = 0.01
 for r in range(2, 5):
     for t in range(4,5):
