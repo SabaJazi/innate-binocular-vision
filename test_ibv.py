@@ -1,6 +1,6 @@
 """
-Test suite for lgn_optimized.py
-Run with:  python -m pytest test_lgn_optimized.py -v
+Test suite for lgn_ibv.py
+Run with:  python -m pytest test_lgn_ibv.py -v
 """
 
 import json
@@ -13,7 +13,7 @@ import pytest
 from PIL import Image
 
 # Import everything from the main module
-from lgn_optimized import (
+from lgn_ibv import (
     LGN,
     calculate_optimal_p,
     double_convolve,
