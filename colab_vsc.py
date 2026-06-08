@@ -493,19 +493,18 @@ parent_path = str(main_path / str(today))
 
 auto_path = resolve_existing_path(main_path, [
     # Path("output") / "shift5_70patch.png",
-    # Path("shift5_70patch.png"),
-    Path("original_shift5_70patch.png"),
+    Path("shift5_70patch.png"),
+    # Path("original_shift5_70patch.png"),
 ])
 gt_path = resolve_existing_path(main_path, [
-    Path("original_dm.png"),
-    # Path("output") / "dm.png",
+    # Path("original_dm.png"),
+    Path ("dm.png"),
     # Path("output") / "depthmap.png",
     # Path("output") / "inverted_dm.png",
 ])
 
 auto = open_norm(str(auto_path), verbose=False)
 gt = np.array(Image.open(gt_path).convert("L"))
-
 #
 # order of variables:
 # num_filters, num_components, num_patches, patch_size,
