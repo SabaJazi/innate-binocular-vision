@@ -1,7 +1,7 @@
 """
 Figure 5: Inter-layer correlation as a function of the transfer parameter a.
 
-Sweeps a from 0.0 to 0.5 across several p values, runs the LGN model
+Sweeps a from 0.0 to 1.0across several p values, runs the LGN model
 `N_TRIALS` times per point, and plots the mean inter-layer Pearson
 correlation rho with standard-error bars.
 
