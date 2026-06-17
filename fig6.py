@@ -50,9 +50,9 @@ A_VALUES   = [0.1, 0.2, 0.3, 0.4, 0.5]   # y-axis
 R          = 4                           # fixed propagation radius
 T          = 3                           # fixed activation threshold
 LGN_WIDTH  = 256
-PATCH_SIZE = 9
-NUM_PATCHES    = 20000                    # patches per (p, a) cell (lower = faster)
-NUM_COMPONENTS = 60                      # ICA components per fit (more = smoother %)
+PATCH_SIZE = 16
+NUM_PATCHES    = 50000                    # patches per (p, a) cell (lower = faster)
+NUM_COMPONENTS = 50                      # ICA components per fit (more = smoother %)
 OSI_THRESHOLD  = 0.3                     # structured if OSI exceeds this
 ANGLE_WINDOW   = 10.0                    # +/- degrees counted as "dominant axis"
 

@@ -543,16 +543,16 @@ def main():
     # Sweep over (r, t, a) parameter combinations
     p_shift = 0.01
     for r in range(2, 5):
-        for t in range(3, 5):
+        for t in range(2, 5):
             for a in np.arange(0.1, 0.7, 0.1):
                 p = calculate_optimal_p(t, r, a) + p_shift
                 print("-------------------------------------")
                 print(f"r={r}  t={t}  a={a:.1f}  p={p:.4f}")
                 print("-------------------------------------")
                 result = run_experiment(
-                    num_filters=100, num_components=20,
-                    num_patches=10000, patch_size=9,
-                    lgn_width=256, lgn_p=p,
+                    num_filters=100, num_components=50,
+                    num_patches=50000, patch_size=32,
+                    lgn_width=512, lgn_p=p,
                     lgn_r=r, lgn_t=t, lgn_a=a,
                     autostereogram=autostereogram,
                     asg_patch_size=70,

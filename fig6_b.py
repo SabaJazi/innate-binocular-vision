@@ -43,10 +43,10 @@ P_VALUES   = [0.04, 0.06, 0.08, 0.10]    # x-axis
 A_VALUES   = [0.1, 0.2, 0.3, 0.4, 0.5]   # one curve per a
 R          = 4                           # fixed propagation radius
 T          = 3                           # fixed activation threshold
-LGN_WIDTH  = 128
-PATCH_SIZE = 9
-NUM_PATCHES    = 2000
-NUM_COMPONENTS = 60
+LGN_WIDTH  = 256
+PATCH_SIZE = 16
+NUM_PATCHES    = 50000
+NUM_COMPONENTS = 50
 OSI_THRESHOLD  = 0.3
 ANGLE_WINDOW   = 10.0
 
