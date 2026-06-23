@@ -23,6 +23,8 @@ from scipy import signal
 from scipy.interpolate import griddata
 from sklearn.decomposition import FastICA
 from sklearn.feature_extraction import image as skimage
+from scipy.ndimage import label
+
 
 
 # ---------------------------------------------------------------------------
@@ -71,7 +73,20 @@ def resolve_existing_path(base: Path, candidates: list) -> Path:
     searched = [str(base / c) for c in candidates]
     raise FileNotFoundError(f"Could not find required file. Checked: {searched}")
 
+def compute_cluster_sizes(binary_map):
+    """
+    Compute sizes of connected clusters in a binary 2D map.
+    Returns a list of cluster sizes.
+    """
+    # label connected regions (8-connectivity)
+    labeled_array, num_features = label(binary_map)
 
+    sizes = []
+    for i in range(1, num_features + 1):
+        size = np.sum(labeled_array == i)
+        sizes.append(size)
+
+    return sizes
 # ---------------------------------------------------------------------------
 # LGN model
 # ---------------------------------------------------------------------------
@@ -546,11 +561,16 @@ def main():
         for t in range(2, 5):
             for a in np.arange(0.1, 0.7, 0.1):
                 p = calculate_optimal_p(t, r, a) + p_shift
+
+                if p >= 1:
+                    print(f"Skipping r={r}  t={t}  a={a:.1f}  ->  p={p:.4f} (>= 1)")
+                    continue
+
                 print("-------------------------------------")
                 print(f"r={r}  t={t}  a={a:.1f}  p={p:.4f}")
                 print("-------------------------------------")
                 result = run_experiment(
-                    num_filters=100, num_components=50,
+                    num_filters=50, num_components=50,
                     num_patches=50000, patch_size=32,
                     lgn_width=512, lgn_p=p,
                     lgn_r=r, lgn_t=t, lgn_a=a,
