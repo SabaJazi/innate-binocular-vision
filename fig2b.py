@@ -9,7 +9,7 @@ import numpy as np
 from lgn_ibv import LGN, calculate_optimal_p
 
 # ---------------------------------------------------------------------------
-# Sweep parameters  (edit to match your experiment)
+# Sweep parameters  
 # ---------------------------------------------------------------------------
 
 R           = 4

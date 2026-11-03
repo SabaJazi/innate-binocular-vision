@@ -284,7 +284,7 @@ def main():
     # ---- PARAMS: biologically plausible regime from the paper ----
     PARAMS = dict(
         num_patches=120000,   # raise for cleaner filters (slower)
-        num_components=30,   # ICA components = candidate filters
+        num_components=50,   # ICA components = candidate filters
         patch_size=32,       # paper uses 32x32
         lgn_width=256,       # grid size (paper sweep used up to 512)
         lgn_p=0.09,          # intermediate p (paper: ~0.08-0.10)
@@ -293,7 +293,7 @@ def main():
         lgn_a=0.15,          # low inter-eye transfer (paper: ~0.10-0.20)
     )
     TOP_N = 15               # how many best pairs to show
-    OUT = "filter_bank.png"
+    OUT = "fig5_filter_bank.png"
 
     print("Generating binocular patches...")
     patches = generate_binocular_patches(

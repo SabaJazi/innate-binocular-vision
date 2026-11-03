@@ -21,11 +21,11 @@ from lgn_ibv import LGN, calculate_optimal_p
 ALPHA_VALUES   = [0.00, 0.16, 0.25, 0.38, 0.50]
 R, T           = 4, 3
 P_SHIFT        = 0.01
-LGN_WIDTH      = 128
+LGN_WIDTH      = 256
 RANDOM_SEED    = 42          # fixed seed → reproducible waves
 
 # Typography  (points)
-FONT_FAMILY    = "DejaVu Sans"   # swap for "Arial" if your journal requires it
+FONT_FAMILY    = "DejaVu Sans"   # swap for "Arial" if journal requires it
 TITLE_SIZE     = 9
 LABEL_SIZE     = 8
 TICK_SIZE      = 7

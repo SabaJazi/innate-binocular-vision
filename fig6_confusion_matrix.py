@@ -1,5 +1,5 @@
 """
-Figure 6: Filter quality vs parameters.
+Figure 5: Filter quality vs parameters.
 
 For each (p, a) combination this script:
   1. Generates a set of ICA filters using the LGN-IBV forward path.
@@ -50,7 +50,7 @@ A_VALUES   = [0.1, 0.2, 0.3, 0.4, 0.5]   # y-axis
 R          = 4                           # fixed propagation radius
 T          = 3                           # fixed activation threshold
 LGN_WIDTH  = 256
-PATCH_SIZE = 16
+PATCH_SIZE = 32
 NUM_PATCHES    = 50000                    # patches per (p, a) cell (lower = faster)
 NUM_COMPONENTS = 50                      # ICA components per fit (more = smoother %)
 OSI_THRESHOLD  = 0.3                     # structured if OSI exceeds this
@@ -112,7 +112,7 @@ def fraction_structured(p: float, a: float) -> float:
     ident = generate_ident_hash(p, a, R, T)
 
     # generate_patches writes activity images; send them to a scratch folder.
-    scratch = "_fig6_scratch"
+    scratch = "_fig5_scratch"
 
     patches, _ = generate_patches(
         NUM_PATCHES, PATCH_SIZE, LGN_WIDTH,
@@ -184,6 +184,6 @@ cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 cbar.set_label("% structured filters")
 
 fig.tight_layout(pad=0.4)
-fig.savefig("figure6_filter_quality.pdf", bbox_inches="tight")
-fig.savefig("figure6_filter_quality.png", dpi=600, bbox_inches="tight")
-print("\nSaved figure6_filter_quality.{pdf,png}")
+fig.savefig("figure5_filter_quality.pdf", bbox_inches="tight")
+fig.savefig("figure5_filter_quality.png", dpi=600, bbox_inches="tight")
+print("\nSaved figure5_filter_quality.{pdf,png}")

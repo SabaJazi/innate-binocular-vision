@@ -1,5 +1,5 @@
 """
-Figure 4b: Filter quality vs parameters (curve version).
+Figure 4: Filter quality vs parameters (curve version).
 
 Same analysis as figure4_filter_quality.py (heatmap), but plotted as line
 curves instead:

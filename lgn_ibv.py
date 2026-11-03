@@ -557,9 +557,9 @@ def main():
 
     # Sweep over (r, t, a) parameter combinations
     p_shift = 0.01
-    for r in range(2, 5):
-        for t in range(2, 5):
-            for a in np.arange(0.1, 0.7, 0.1):
+    for r in range(3, 4): 
+        for t in range(3, 4):
+            for a in np.arange(0.01, 0.2, 0.05):
                 p = calculate_optimal_p(t, r, a) + p_shift
 
                 if p >= 1:
@@ -570,7 +570,7 @@ def main():
                 print(f"r={r}  t={t}  a={a:.1f}  p={p:.4f}")
                 print("-------------------------------------")
                 result = run_experiment(
-                    num_filters=50, num_components=50,
+                    num_filters=200, num_components=50,
                     num_patches=50000, patch_size=32,
                     lgn_width=512, lgn_p=p,
                     lgn_r=r, lgn_t=t, lgn_a=a,

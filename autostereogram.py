@@ -45,7 +45,7 @@ def generate_2d_pink_noise(size=(70, 70), frequency=1.0, seed=0):
 #-----------------------------------making a depthmap for stereogram ----------------------------------------------
     #Function to create the circular depthmap for the autostereogram
 def create_circular_depthmap(shape=(270, 270), center=None, radius=100):
-    depthmap = np.zeros(shape, dtype=np.float)
+    depthmap = np.zeros(shape, dtype=float)
     
     a = 100
     b = 170
@@ -100,10 +100,10 @@ if not os.path.exists(folder_path):
     os.makedirs(folder_path)
 
 # Save the file to the folder
-sv = PIL.Image.fromarray(autostereogram, mode='L')
+sv = PIL.Image.fromarray(autostereogram.astype(np.uint8), mode='L')
 sv.save(os.path.join(folder_path, "shift5_70patch.png"))
 
-rescaled = (depthmap[:-100, 100:]).astype(np.uint8)
+rescaled = (depthmap[:200, :200]).astype(np.uint8)
 sv = PIL.Image.fromarray(rescaled, mode='L')
 sv.save("output/depthmap.png")
 
