@@ -26,11 +26,11 @@ from lgn_ibv import LGN        # reuse the model class
 # ---------------------------------------------------------------------------
 
 A_VALUES  = np.linspace(0.0, 1.0, 11)   # x-axis: 0.0, 0.1, ..., 0.5
-P_VALUES  = [0.04, 0.07, 0.10]         # non-saturating p values (one line each)
+P_VALUES  = [0.04, 0.06, 0.08, 0.10]    # non-saturating p values (one line each)
 R         = 4                          # fixed propagation radius
 T         = 3                          # fixed activation threshold
 LGN_WIDTH = 128                        # full grid; large enough to avoid edge effects
-N_TRIALS  = 8                          # repeats per (p, a) point, averaged
+N_TRIALS  = 10                        # repeats per (p, a) point, averaged
 
 # ---------------------------------------------------------------------------
 # Plot style (IEEE single-column friendly)
@@ -44,12 +44,15 @@ plt.rcParams.update({
 
 # Distinct marker + linestyle per p so lines are readable in grayscale
 STYLES = [
-    {"marker": "o", "linestyle": "-",  "color": "#222222"},
+    {"marker": "*", "linestyle": ":",  "color":"#999999"},
     {"marker": "s", "linestyle": "--", "color": "#666666"},
-    {"marker": "^", "linestyle": ":",  "color": "#999999"},
+    {"marker": "d", "linestyle": "-.",  "color":"#444444"},
+    {"marker": "o", "linestyle": "-",  "color":"#222222"},
+
 ]
 
 
+ 
 def mean_correlation(p: float, a: float, n_trials: int) -> tuple:
     """
     Run the LGN model `n_trials` times for given (p, a) and return
@@ -75,6 +78,7 @@ def mean_correlation(p: float, a: float, n_trials: int) -> tuple:
 # ---------------------------------------------------------------------------
 # Run sweep & plot
 # ---------------------------------------------------------------------------
+P_C = 0.11
 
 fig, ax = plt.subplots(figsize=(3.5, 2.7))
 
@@ -92,17 +96,23 @@ for i, p in enumerate(P_VALUES):
         markersize=4, linewidth=1.0, capsize=2,
         **STYLES[i % len(STYLES)],
     )
-
+ax.text(
+    0,
+    0.85,
+    rf"$p_c \approx {P_C:.2f}$",
+    fontsize=6,
+    bbox=dict(facecolor='white', alpha=0.8, edgecolor='none')
+)
 ax.set_xlabel(r"Transfer parameter $a$")
 ax.set_ylabel(r"Mean inter-layer correlation $\rho$")
 ax.set_xlim(-0.02, 1.1)
 ax.set_ylim(0, 1.0)
 ax.grid(True, linewidth=0.3, alpha=0.4)
-ax.legend(frameon=False, fontsize=6, loc="lower right", title="recruitable\nfraction")
+ax.legend(frameon=False, fontsize=6, loc="lower right", title="Recruitable\nfraction")
 
 fig.tight_layout(pad=0.4)
 
 # Save in IEEE-accepted formats
-fig.savefig("figure5_correlation_vs_a.pdf", bbox_inches="tight")
-fig.savefig("figure5_correlation_vs_a.png", dpi=600, bbox_inches="tight")
-print("\nSaved figure5_correlation_vs_a.{pdf,png}")
+fig.savefig("figure4_correlation_vs_a.pdf", bbox_inches="tight")
+fig.savefig("figure4_correlation_vs_a.png", dpi=600, bbox_inches="tight")
+print("\nSaved figure4_correlation_vs_a.{pdf,png}")

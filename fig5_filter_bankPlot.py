@@ -283,14 +283,14 @@ def plot_filter_bank(first_eye, second_eye, scores, top_n=12,
 def main():
     # ---- PARAMS: biologically plausible regime from the paper ----
     PARAMS = dict(
-        num_patches=120000,   # raise for cleaner filters (slower)
+        num_patches=250000,   # raise for cleaner filters (slower)
         num_components=50,   # ICA components = candidate filters
-        patch_size=32,       # paper uses 32x32
+        patch_size=16,       # paper uses 32x32
         lgn_width=256,       # grid size (paper sweep used up to 512)
         lgn_p=0.09,          # intermediate p (paper: ~0.08-0.10)
         lgn_r=4,             # propagation radius
         lgn_t=3,             # activation threshold
-        lgn_a=0.15,          # low inter-eye transfer (paper: ~0.10-0.20)
+        lgn_a=0.30,          # low inter-eye transfer (paper: ~0.10-0.2)
     )
     TOP_N = 15               # how many best pairs to show
     OUT = "fig5_filter_bank.png"

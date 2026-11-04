@@ -557,9 +557,9 @@ def main():
 
     # Sweep over (r, t, a) parameter combinations
     p_shift = 0.01
-    for r in range(3, 4): 
+    for r in range(4, 5): 
         for t in range(3, 4):
-            for a in np.arange(0.01, 0.2, 0.05):
+            for a in np.arange(0.01, 0.12, 0.02):
                 p = calculate_optimal_p(t, r, a) + p_shift
 
                 if p >= 1:
