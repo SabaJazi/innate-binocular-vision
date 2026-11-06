@@ -26,9 +26,9 @@ RANDOM_SEED    = 42          # fixed seed → reproducible waves
 
 # Typography  (points)
 FONT_FAMILY    = "DejaVu Sans"   # swap for "Arial" if journal requires it
-TITLE_SIZE     = 9
-LABEL_SIZE     = 8
-TICK_SIZE      = 7
+TITLE_SIZE     = 12
+LABEL_SIZE     = 11
+TICK_SIZE      = 10
 
 # Layout (inches)
 COL_WIDTH      = 1.5             # width of each image panel
@@ -41,7 +41,7 @@ COL_GAP        = 0.10            # gap between columns
 ROW_GAP        = 0.08            # gap between rows
 
 N_ROWS = len(ALPHA_VALUES)
-N_COLS = 3
+N_COLS = 2
 
 FIG_W = LEFT_MARGIN + N_COLS * COL_WIDTH + (N_COLS - 1) * COL_GAP + RIGHT_MARGIN
 FIG_H = TOP_MARGIN  + N_ROWS * ROW_HEIGHT + (N_ROWS - 1) * ROW_GAP  + BOTTOM_MARGIN
@@ -99,7 +99,7 @@ for row in range(N_ROWS):
 # Generate and draw data
 # ---------------------------------------------------------------------------
 
-COLUMN_TITLES = ["Layer 1", "Layer 2", "Difference"]
+COLUMN_TITLES = ["Layer 1", "Layer 2"]
 for row, a in enumerate(ALPHA_VALUES):
     p = calculate_optimal_p(T, R, a) + P_SHIFT
 
@@ -112,9 +112,9 @@ for row, a in enumerate(ALPHA_VALUES):
 
     layer1     = mat[0]
     layer2     = mat[1]
-    difference = np.abs(layer1 - layer2)
+    # difference = np.abs(layer1 - layer2)
 
-    images = [layer1, layer2, difference]
+    images = [layer1, layer2]
 
     for col, img in enumerate(images):
         ax = axes[(row, col)]
@@ -154,7 +154,7 @@ fig.text(
     to_fig_x(0.08), grid_bottom + N_ROWS * panel_h_frac / 2 + (N_ROWS - 1) * row_gap_frac / 2,
     r"$\alpha$",
     va="center", ha="center",
-    fontsize=TITLE_SIZE + 1, fontstyle="italic",
+    fontsize=TITLE_SIZE + 3, fontstyle="italic",
     rotation=90,
 )
 
