@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.lines import Line2D
+from matplotlib.ticker import MaxNLocator
 from lgn_ibv import (
     LGN,
     compute_cluster_sizes,
@@ -22,53 +24,58 @@ def cluster_analysis_example(lgn_width, r, t, a, p_values):
 
 
 def plot_cluster_summary(results, selected_ps, min_size=MIN_SIZE, p_labels=None):
-    fig, (ax_hist, ax_mean) = plt.subplots(1, 2, figsize=(7.0, 2.7))
+    fig, axes = plt.subplots(len(selected_ps), 1, figsize=(9.0, 2.0 * len(selected_ps)),
+                            sharex=True, sharey=True)
+    if len(selected_ps) == 1:
+        axes = [axes]
 
-    # distinct, well-separated hues that stay legible when overlapping
     palette = ["#1f77b4", "#d62728", "#2ca02c", "#9467bd",
                "#ff7f0e", "#17becf", "#e377c2"]
+    hatch_styles = ["//", "\\\\", "--", "++", "xx", "oo", ".."]
     colors = {p: palette[i % len(palette)] for i, p in enumerate(selected_ps)}
+    hatches = {p: hatch_styles[i % len(hatch_styles)] for i, p in enumerate(selected_ps)}
+    max_count = 0
 
-    # ---- Panel A: distributions ----
-    means = {}
-    for p in selected_ps:
-        sizes = [s for s in results[p] if s > min_size]
-        m = np.mean(sizes)
-        means[p] = m
+    for ax, p in zip(axes, selected_ps):
+        sizes = [s for s in results[p] if min_size < s <= 150]
+        if not sizes:
+            sizes = [min_size + 1]
 
-        # legend entry: value + optional semantic label + sample size
+        mean_size = np.mean(sizes)
         tag = f" ({p_labels[p]})" if p_labels and p in p_labels else ""
-        label = f"p = {p:.2f}{tag}, n={len(sizes)}"
+        label = f"p = {p:.2f}{tag}"
 
-        ax_hist.hist(sizes, bins=30, alpha=0.45,
-                     color=colors[p], edgecolor=colors[p], linewidth=1.1,
-                     label=label)
-        # dashed line at this distribution's mean (ties Panel B back to A)
-        ax_hist.axvline(m, color=colors[p], linestyle="--",
-                        linewidth=1, alpha=0.9)
+        counts, bins = np.histogram(sizes, bins=np.linspace(min_size + 1, 150, 30))
+        max_count = max(max_count, counts.max() if counts.size else 0)
 
-    ax_hist.set_xlabel(f"Cluster size (> {min_size})")
-    ax_hist.set_ylabel("Frequency")
-    ax_hist.set_title("(A) Cluster size distributions")
-    ax_hist.legend(frameon=False, fontsize=8)
+        ax.hist(sizes, bins=bins, alpha=0.45, color=colors[p], edgecolor=colors[p],
+                linewidth=1.1, hatch=hatches[p])
+        ax.axvline(mean_size, color=colors[p], linestyle="--", linewidth=1.2)
 
-    # ---- Panel B: mean vs p ----
-    p_vals, avg_sizes = [], []
-    for p in sorted(results):
-        if p in means:
-            p_vals.append(p)
-            avg_sizes.append(means[p])
+        p_handle = Line2D([], [], color=colors[p], linewidth=1.5)
+        n_handle = Line2D([], [], linestyle="None", marker="s", color=colors[p],
+                          markerfacecolor=colors[p], alpha=0.45, markersize=6)
+        mean_handle = Line2D([], [], color=colors[p], linestyle="--", linewidth=1.2)
+        ax.legend(
+            handles=[p_handle, n_handle, mean_handle],
+            labels=[f"p = {p:.2f}{tag}", f"n = {len(sizes)}", f"mean = {mean_size:.1f}"],
+            frameon=False, fontsize=7, loc="upper right", handlelength=1.8,
+            handletextpad=0.6, borderpad=0.3
+        )
 
-    ax_mean.plot(p_vals, avg_sizes, "-", color="0.5", zorder=1)
-    ax_mean.scatter(p_vals, avg_sizes, c=[colors.get(p, "0.3") for p in p_vals],
-                    s=40, zorder=2)
-    ax_mean.set_xlabel("Recruitable fraction $p$")
-    ax_mean.set_ylabel(f"Mean cluster size (> {min_size})")
-    ax_mean.set_title("(B) Mean cluster size vs $p$")
+        ax.set_ylabel("Frequency")
+        ax.set_title(label)
+        ax.set_xlim(min_size, 150)
+        ax.yaxis.set_major_locator(MaxNLocator(4))
 
-    fig.tight_layout(pad=0.6)
-    fig.savefig("figure7_cluster_summary.pdf", bbox_inches="tight")
-    fig.savefig("figure7_cluster_summary.png", dpi=600, bbox_inches="tight")
+    y_max = max_count * 1.2 if max_count > 0 else 1
+    for ax in axes:
+        ax.set_ylim(0, y_max)
+
+    axes[-1].set_xlabel("Cluster size")
+    fig.tight_layout(pad=0.35)
+    fig.savefig("figure7_cluster_summary.pdf")
+    fig.savefig("figure7_cluster_summary.png", dpi=600)
     print("\nSaved figure7_cluster_summary.{pdf,png}")
     plt.show()
 
@@ -76,10 +83,10 @@ def plot_cluster_summary(results, selected_ps, min_size=MIN_SIZE, p_labels=None)
 if __name__ == "__main__":
     lgn_width = 256
     r, t, a = 3, 3, 0.2
-    p_values = [0.05, 0.08, 0.12]
+    p_values = [0.05, 0.08, 0.11]
 
     # semantic labels for this specific figure (drop if you densify p_values)
-    p_labels = {0.05: "low", 0.08: "intermediate", 0.12: "high"}
+    p_labels = {0.05: "low", 0.08: "intermediate", 0.11: "high"}
 
     results = cluster_analysis_example(lgn_width, r, t, a, p_values)
     plot_cluster_summary(results, p_values, p_labels=p_labels)
