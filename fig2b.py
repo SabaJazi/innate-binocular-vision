@@ -25,16 +25,16 @@ P_VALUES    = [0.30, 0.26, 0.22, 0.18, 0.14, 0.10]   # top to bottom
 # ---------------------------------------------------------------------------
 
 FONT_FAMILY = "DejaVu Sans"
-TITLE_SIZE  = 9
-LABEL_SIZE  = 8
-TICK_SIZE   = 10
+TITLE_SIZE  = 15
+LABEL_SIZE  = 13
+TICK_SIZE   = 15
 
 # ---------------------------------------------------------------------------
 # Layout (inches)  — square panels since the array is square
 # ---------------------------------------------------------------------------
 
 PANEL_SIZE    = 1.2
-LEFT_MARGIN   = 0.55
+LEFT_MARGIN   = 0.80
 RIGHT_MARGIN  = 0.15
 TOP_MARGIN    = 0.65
 BOTTOM_MARGIN = 0.45
@@ -104,18 +104,20 @@ for row, p in enumerate(P_VALUES):
 
         ax.set_xticks([])
         ax.set_yticks([])
+        ax.tick_params(axis="both", which="both", labelsize=TICK_SIZE, length=3, width=0.6)
         for spine in ax.spines.values():
             spine.set_linewidth(0.5)
             spine.set_edgecolor("#666666")
 
         # T value labels along the bottom row
         if row == N_ROWS - 1:
-            ax.set_xlabel(str(t), fontsize=LABEL_SIZE, labelpad=3)
+            ax.set_xlabel(str(t), fontsize=LABEL_SIZE + 2, labelpad=3)
 
-        # P value labels along the left column
+        # Per-row p values are kept as labels, distinct from the global P axis title.
         if col == 0:
-            ax.set_ylabel(f"{p:.2f}", fontsize=LABEL_SIZE,
-                          rotation=0, labelpad=22, va="center")
+            ax.text(-0.1, 0.5, f"{p:.2f}", transform=ax.transAxes,
+                    fontsize=LABEL_SIZE + 2, ha="right", va="center",
+                    rotation=0, color="black")
 
 # ---------------------------------------------------------------------------
 # Shared axis titles and figure title
@@ -127,16 +129,16 @@ fig.text(
     to_fy(BOTTOM_MARGIN) - to_fy(0.28),
     "T",
     ha="center", va="top",
-    fontsize=LABEL_SIZE + 4, fontweight="bold",
+    fontsize=TITLE_SIZE + 2, fontweight="bold",
 )
 
-# 'P' label centred to the left of the rows
+# Global vertical axis label kept far away from the row-wise p values.
 fig.text(
-    to_fx(0.08),
+    to_fx(0.02),
     grid_bottom + (N_ROWS * panel_h + (N_ROWS - 1) * row_gap) / 2,
     "P",
     ha="center", va="center",
-    fontsize=LABEL_SIZE + 4, fontweight="bold",
+    fontsize=TITLE_SIZE + 2, fontweight="bold",
     rotation=90,
 )
 
@@ -144,26 +146,26 @@ fig.text(
 fig.text(
     grid_left + (N_COLS * panel_w + (N_COLS - 1) * col_gap) / 2,
     1.0 - to_fy(TOP_MARGIN) + to_fy(0.08),
-    f"r = {R},  a = {A}",
+    f"r = {R},  $\\alpha$ = {A}",
     ha="center", va="bottom",
-    fontsize=TICK_SIZE, fontstyle="italic",
+    fontsize=TITLE_SIZE, fontstyle="italic",
 )
 
 # Main title
-fig.text(
-    grid_left + (N_COLS * panel_w + (N_COLS - 1) * col_gap) / 2,
-    1.0 - to_fy(0.08),
-    "Single Layer Simulated LGN Activity with Varying P/T",
-    ha="center", va="top",
-    fontsize=TITLE_SIZE, fontweight="bold",
-)
+# fig.text(
+#     grid_left + (N_COLS * panel_w + (N_COLS - 1) * col_gap) / 2,
+#     1.0 - to_fy(0.08),
+#     "Single Layer Simulated LGN Activity with Varying P/T",
+#     ha="center", va="top",
+#     fontsize=TITLE_SIZE + 2, fontweight="bold",
+# )
 
 # ---------------------------------------------------------------------------
 # Save
 # ---------------------------------------------------------------------------
 
-plt.savefig("lgn_pt_sweep.pdf", bbox_inches="tight")
-plt.savefig("lgn_pt_sweep.png", bbox_inches="tight", dpi=300)
+# plt.savefig("lgn_pt_sweep.pdf", bbox_inches="tight")
+plt.savefig("fig2b_lgn_pt_sweep.png", bbox_inches="tight", dpi=300)
 plt.show()
 
-print("Saved: lgn_pt_sweep.pdf / lgn_pt_sweep.png")
+print("Saved: fig2b_lgn_pt_sweep.pdf / fig2b_lgn_pt_sweep.png")
