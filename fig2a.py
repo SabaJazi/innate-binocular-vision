@@ -18,7 +18,7 @@ from lgn_ibv import LGN, calculate_optimal_p
 # Plot settings  (edit here to match your target journal's style guide)
 # ---------------------------------------------------------------------------
 
-ALPHA_VALUES   = [0.00, 0.25, 0.5, 0.75, 1.0]
+ALPHA_VALUES   = [0.00, 0.1, 0.2, 0.3, 0.5]
 R, T           = 4, 3
 P_SHIFT        = 0.01
 LGN_WIDTH      = 256
@@ -26,22 +26,22 @@ RANDOM_SEED    = 42          # fixed seed → reproducible waves
 
 # Typography  (points)
 FONT_FAMILY    = "DejaVu Sans"   # swap for "Arial" if journal requires it
-TITLE_SIZE     = 12
-LABEL_SIZE     = 11
+TITLE_SIZE     = 16
+LABEL_SIZE     = 15
 TICK_SIZE      = 10
 
 # Layout (inches)
 COL_WIDTH      = 1.5             # width of each image panel
 ROW_HEIGHT     = 1.5             # height of each image panel (match COL_WIDTH for square images)
-LEFT_MARGIN    = 0.82            # more room so labels sit outside each corresponding plot
+LEFT_MARGIN    = 1.00            # more room so labels sit outside each corresponding plot
 RIGHT_MARGIN   = 0.12
-TOP_MARGIN     = 0.40            # space for column titles
+TOP_MARGIN     = 0.50            # space for column titles
 BOTTOM_MARGIN  = 0.20
-COL_GAP        = 0.10            # gap between columns
+COL_GAP        = 0.35            # gap between columns
 ROW_GAP        = 0.08            # gap between rows
 
 N_ROWS = len(ALPHA_VALUES)
-N_COLS = 4
+N_COLS = 2
 ZOOM_COL_GAP = 0.18
 ZOOM_PANEL_W = COL_WIDTH
 ZOOM_PANEL_H = ROW_HEIGHT
@@ -109,7 +109,7 @@ for row in range(N_ROWS):
 # Generate and draw data
 # ---------------------------------------------------------------------------
 
-COLUMN_TITLES = ["Layer 1", "Layer 2", f"{ZOOM_FACTOR}x zoom Layer 1", f"{ZOOM_FACTOR}x zoom Layer 2"]
+COLUMN_TITLES = ("Left eye", "Right eye")
 for row, a in enumerate(ALPHA_VALUES):
     p = calculate_optimal_p(T, R, a) + P_SHIFT
 
@@ -126,7 +126,7 @@ for row, a in enumerate(ALPHA_VALUES):
     zoom1 = layer1[y0:y1, x0:x1]
     zoom2 = layer2[y0:y1, x0:x1]
 
-    images = [layer1, layer2, zoom1, zoom2]
+    images = [ zoom1, zoom2]
 
     for col, img in enumerate(images):
         ax = axes[(row, col)]
@@ -134,13 +134,13 @@ for row, a in enumerate(ALPHA_VALUES):
                   interpolation="nearest")
         ax.set_aspect('equal')
 
-        if col < 2:
-            rect = mpatches.Rectangle(
-                (x0, y0), x1 - x0, y1 - y0,
-                fill=False, edgecolor='red', linewidth=1.0,
-                linestyle='-', transform=ax.transData
-            )
-            ax.add_patch(rect)
+        # if col < 2:
+        #     rect = mpatches.Rectangle(
+        #         (x0, y0), x1 - x0, y1 - y0,
+        #         fill=False, edgecolor='red', linewidth=1.0,
+        #         linestyle='-', transform=ax.transData
+        #     )
+        #     ax.add_patch(rect)
 
         # Remove all tick marks and spines
         ax.set_xticks([])
@@ -152,7 +152,7 @@ for row, a in enumerate(ALPHA_VALUES):
         # Column titles on the top row only
         if row == 0:
             ax.set_title(COLUMN_TITLES[col], fontsize=TITLE_SIZE,
-                         fontweight="normal", pad=4)
+                         fontweight="normal", pad=10)
 
         # Row alpha value on the left of the first column
         if col == 0:
@@ -160,7 +160,7 @@ for row, a in enumerate(ALPHA_VALUES):
                 rf"$\alpha = {a:.2f}$",
                 fontsize=LABEL_SIZE,
                 rotation=0,
-                labelpad=28,
+                labelpad=40,
                 va="center",
             )
 
